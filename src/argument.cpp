@@ -141,6 +141,7 @@ void initGlobalVars() {
   onlyLG_CMD = (isRoutability) ? true : false;
 
   overflowMin = PREC_MAX;
+  fastWL = false;
 }
 
 void initGlobalVarsAfterParse() {

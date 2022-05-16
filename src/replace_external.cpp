@@ -1,4 +1,5 @@
 #include "replace_external.h"
+#include "replace_private.h"
 #include "wlen.h"
 #include "initPlacement.h"
 #include "plot.h"
@@ -301,6 +302,12 @@ replace_external::set_step_scale(double step_scale) {
 void
 replace_external::set_target_overflow(double overflow) {
   overflowMin = overflow;
+}
+
+void
+replace_external::set_fastWL(bool fast) {
+  cout<<"Fast WL model is set on"<<endl;
+  fastWL = fast;
 }
 
 void

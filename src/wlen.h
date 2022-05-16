@@ -142,6 +142,7 @@ void net_update_init(void);
 void net_update(FPOS *st);
 void net_update_lse(FPOS *st);
 void net_update_wa(FPOS *st);
+void net_update__wa_fast(FPOS *st);
 
 prec GetHpwl();
 prec UpdateNetAndGetHpwl();

@@ -666,7 +666,14 @@ void net_update(FPOS *st) {
       return net_update_lse(st);
       break;
     case WA:
-      return net_update_wa(st);
+      if(fastWL)
+      {
+        return net_update__wa_fast(st);
+      }
+      else {
+        return net_update_wa(st);
+      }
+      
       break;
   }
 }
@@ -871,6 +878,171 @@ prec net_update_hpwl_mac(void) {
 // WA
 //
 void net_update_wa(FPOS *st) {
+  int i = 0;
+
+  bool timeon = false;
+  double time = 0.0f;
+  if(timeon)
+    time_start(&time);
+
+  omp_set_num_threads(numThread);
+#pragma omp parallel default(none) shared(gcell_cnt, gcell_st, st) private(i)
+  {
+//        CELL* cell = NULL;
+#pragma omp for
+    for(i = 0; i < gcell_cnt; i++) {
+      CELL *cell = &gcell_st[i];
+      cell->center = st[i];
+      cell->den_pmin.x = cell->center.x - cell->half_den_size.x;
+      cell->den_pmin.y = cell->center.y - cell->half_den_size.y;
+      cell->den_pmax.x = cell->center.x + cell->half_den_size.x;
+      cell->den_pmax.y = cell->center.y + cell->half_den_size.y;
+    }
+  }
+  if(timeon) {
+    time_end(&time);
+    cout << "parallelTime : " << time << endl;
+  }
+//  wlen_cof.Dump("current_wlen_cof"); 
+//  cout << "NEG_MAX_EXP: " << NEG_MAX_EXP << endl;
+
+#pragma omp parallel default(none) shared( \
+    netInstance, moduleInstance, st, netCNT, NEG_MAX_EXP, wlen_cof) private(i)
+  {
+//        NET *net = NULL;
+//        PIN *pin = NULL;
+//        MODULE *curModule = NULL;
+//        prec exp_min_x = 0, exp_min_y = 0;
+//        prec exp_max_x = 0, exp_max_y = 0;
+//        prec min_x = 0, min_y = 0;
+//        prec max_x = 0, max_y = 0;
+
+//        FPOS fp, pof, center;
+//        FPOS sum_num1, sum_num2, sum_denom1, sum_denom2;
+
+#pragma omp for
+    for(i = 0; i < netCNT; i++) {
+      NET *net = &netInstance[i];
+      net->min_x = net->terminalMin.x;
+      net->min_y = net->terminalMin.y;
+      net->max_x = net->terminalMax.x;
+      net->max_y = net->terminalMax.y;
+
+      //        cout << "size: " << sizeof(PIN) << endl;
+      //        cout << net->pinCNTinObject << endl;
+      for(int j = 0; j < net->pinCNTinObject; j++) {
+        PIN *pin = net->pin[j];
+
+        //            cout << j << " " << pin << endl;
+
+        if(!pin->term) {
+          MODULE *curModule = &moduleInstance[pin->moduleID];
+          FPOS pof = curModule->pof[pin->pinIDinModule];
+          FPOS center = st[pin->moduleID];
+          FPOS fp;
+          fp.x = center.x + pof.x;
+          fp.y = center.y + pof.y;
+          pin->fp = fp;
+
+          net->min_x = min(net->min_x, fp.x);
+          net->min_y = min(net->min_y, fp.y);
+          net->max_x = max(net->max_x, fp.x);
+          net->max_y = max(net->max_y, fp.y);
+        }
+        else {
+          continue;
+        }
+      }
+      //        if( i >=2 )
+      //        exit(1);
+
+      prec min_x = net->min_x;
+      prec min_y = net->min_y;
+      prec max_x = net->max_x;
+      prec max_y = net->max_y;
+
+      FPOS sum_num1, sum_num2;
+      FPOS sum_denom1, sum_denom2;
+
+      // UPDATE
+      // pin->e1 (MAX)
+      // net->sum_num1 (MAX)
+      // net->sum_denom1 (MAX)
+      // pin->flg1 (MAX)
+      //
+      // pin->e2 (MIN)
+      // net->sum_num2 (MIN)
+      // net->sum_denom2 (MIN)
+      // pin->flg2 (MIN)
+      //
+      //
+      // Note that NEG_MAX_EXP is -300
+      // The meaning NEG_MAX_EXP is. not to have weird out of range values 
+      // in floating vars.
+      //
+      // we know that wlen_cof is 1/ gamma.
+      // See main.cpp wcof00 and wlen.cpp: wcof_init. 
+      //
+      
+      for(int j = 0; j < net->pinCNTinObject; j++) {
+        PIN *pin = net->pin[j];
+        FPOS fp = pin->fp;
+        prec exp_max_x = (fp.x - max_x) * wlen_cof.x;
+        prec exp_min_x = (min_x - fp.x) * wlen_cof.x;
+        prec exp_max_y = (fp.y - max_y) * wlen_cof.y;
+        prec exp_min_y = (min_y - fp.y) * wlen_cof.y;
+
+
+        if(exp_max_x > NEG_MAX_EXP) {
+          pin->e1.x = get_exp(exp_max_x);
+          sum_num1.x += fp.x * pin->e1.x;
+          sum_denom1.x += pin->e1.x;
+          pin->flg1.x = 1;
+        }
+        else {
+          pin->flg1.x = 0;
+        }
+
+        if(exp_min_x > NEG_MAX_EXP) {
+          pin->e2.x = get_exp(exp_min_x);
+          sum_num2.x += fp.x * pin->e2.x;
+          sum_denom2.x += pin->e2.x;
+          pin->flg2.x = 1;
+        }
+        else {
+          pin->flg2.x = 0;
+        }
+
+        if(exp_max_y > NEG_MAX_EXP) {
+          pin->e1.y = get_exp(exp_max_y);
+          sum_num1.y += fp.y * pin->e1.y;
+          sum_denom1.y += pin->e1.y;
+          pin->flg1.y = 1;
+        }
+        else {
+          pin->flg1.y = 0;
+        }
+
+        if(exp_min_y > NEG_MAX_EXP) {
+          pin->e2.y = get_exp(exp_min_y);
+          sum_num2.y += fp.y * pin->e2.y;
+          sum_denom2.y += pin->e2.y;
+          pin->flg2.y = 1;
+        }
+        else {
+          pin->flg2.y = 0;
+        }
+      }
+
+      net->sum_num1 = sum_num1;
+      net->sum_num2 = sum_num2;
+      net->sum_denom1 = sum_denom1;
+      net->sum_denom2 = sum_denom2;
+    }
+  }
+}
+
+void net_update_wa_fast(FPOS *st) {
   int i = 0;
 
   bool timeon = false;

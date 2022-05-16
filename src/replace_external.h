@@ -58,6 +58,8 @@ public:
   void set_net_weight_scale(double net_weight_scale);
 
   void set_routability_driven(bool mode);
+
+  void set_fastWL(bool fast);
   
   bool init_replace();
   bool place_cell_init_place();

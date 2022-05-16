@@ -950,19 +950,25 @@ void myNesterov::SummarizeNesterovOpt(int last_index) {
 void getCostFuncGradient3(struct FPOS *dst, struct FPOS *wdst,
                           struct FPOS *pdst, struct FPOS *pdstl, int N,
                           prec *cellLambdaArr) {
+  int debug  = 0;
   if(FILLER_PLACE && DEN_ONLY_PRECON) {
+    if(debug == 1) cout<< " get cost FuncGradient 3 debug 0"<<endl;
+
     getCostFuncGradient2_filler_DEN_ONLY_PRECON(dst, wdst, pdst, pdstl,
                                                 moduleCNT, N, cellLambdaArr);
   }
   else if(FILLER_PLACE && !DEN_ONLY_PRECON) {
+    if(debug == 1)cout<< " get cost FuncGradient 3 debug 1"<<endl;
     getCostFuncGradient2_filler(dst, wdst, pdst, pdstl, moduleCNT, N,
                                 cellLambdaArr);
   }
   else if(!FILLER_PLACE && DEN_ONLY_PRECON) {
+    if(debug == 1)cout<< " get cost FuncGradient 3 debug 2"<<endl;
     getCostFuncGradient2_DEN_ONLY_PRECON(dst, wdst, pdst, pdstl, N,
                                          cellLambdaArr);
   }
   else if(!FILLER_PLACE && !DEN_ONLY_PRECON) {
+    // if(debug == 1) cout<< " get cost FuncGradient 3 debug 3"<<endl;
     getCostFuncGradient2(dst, wdst, pdst, pdstl, N, cellLambdaArr);
   }
 }
@@ -997,7 +1003,7 @@ void getCostFuncGradient2(struct FPOS *dst, struct FPOS *wdst,
         pgrad.SetZero();
         pgradl.SetZero();
       }
-      else {
+      else {// not macro
         wlen_grad(i, &wgrad);
         if(STAGE == mGP2D) {
           if(constraintDrivenCMD == false) {

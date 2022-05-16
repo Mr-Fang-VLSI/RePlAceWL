@@ -10,6 +10,7 @@ set design_dir ./design/nangate45/${design}
 replace_external rep
 
 # Import LEF/DEF files
+rep set_fastWL 1
 rep import_lef ${lib_dir}/NangateOpenCellLibrary.lef
 rep import_def ${design_dir}/${design}.def
 rep set_output ./output/
