@@ -60,6 +60,7 @@ public:
   void set_routability_driven(bool mode);
 
   void set_fastWL(bool fast);
+  void set_isPlot(bool plot);
   
   bool init_replace();
   bool place_cell_init_place();

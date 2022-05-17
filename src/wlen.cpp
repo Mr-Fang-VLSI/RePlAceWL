@@ -82,6 +82,10 @@ FPOS wlen_cof;
 FPOS wlen_cof_inv;
 EXP_ST *exp_st;
 
+ const int ctrl_pt_num  = 3;
+ prec ctrl_pts[ctrl_pt_num] = {-2000,0.0,2000} ;
+ prec ctrl_pt_grad[ctrl_pt_num]= {1.0,0.0,-1.0};
+
 void SetMAX_EXP_wlen() {
   MAX_EXP = 300;
   NEG_MAX_EXP = -300;
@@ -254,8 +258,18 @@ FPOS get_net_wlen_wa(NET *net) {
   if(net->pinCNTinObject <= 1)
     return FPOS(0,0);
 
-  net_wlen.x = sum_num1.x / sum_denom1.x - sum_num2.x / sum_denom2.x;
-  net_wlen.y = sum_num1.y / sum_denom1.y - sum_num2.y / sum_denom2.y;
+  if(fastWL&&net->pinCNTinObject == 2)
+  {
+    //2-pin
+    net_wlen.x = net->max_x - net->min_x;
+    net_wlen.y = net->max_y - net->min_y;
+  }
+  else{
+    //multiple pin
+    net_wlen.x = sum_num1.x / sum_denom1.x - sum_num2.x / sum_denom2.x;
+    net_wlen.y = sum_num1.y / sum_denom1.y - sum_num2.y / sum_denom2.y;
+  }
+  
 
   return net_wlen;
 }
@@ -596,8 +610,58 @@ void get_net_wlen_grad_wa(FPOS obj, NET *net, PIN *pin, FPOS *grad) {
   FPOS sum_num2 = net->sum_num2;
   FPOS sum_denom1 = net->sum_denom1;
   FPOS sum_denom2 = net->sum_denom2;
+  if(fastWL &&net->pinCNTinObject == 2)
+  {
+    PIN *pin1;
+    pin1 = net->pin[1 - pin->pinIDinNet];
+    
 
-  if(flg1.x) {
+    FPOS fp0,fp1;
+    fp0 = pin->fp;
+    fp1 = pin1->fp;
+
+    FPOS dist;
+    dist.x = fp0.x - fp1.x;
+    dist.y = fp0.y - fp1.y;
+    if(dist.x < ctrl_pts[0])
+    {
+      grad->x = ctrl_pt_grad[0];
+    }
+    if(dist.y < ctrl_pts[0])
+    {
+      grad->y = ctrl_pt_grad[0];
+    }
+    
+    for(int i = 0;i < ctrl_pt_num-1;++i)
+    {
+      if(dist.x > ctrl_pts[i]&&dist.x > ctrl_pts[i+1])
+      {
+        grad->x = ctrl_pt_grad[i] + dist.x*(ctrl_pt_grad[i+1] - ctrl_pt_grad[i])/(ctrl_pts[i+1]-ctrl_pts[i]);
+        break;
+      }
+    }
+
+    for(int i = 0;i < ctrl_pt_num-1;++i)
+    {
+      if(dist.y > ctrl_pts[i]&&dist.y > ctrl_pts[i+1])
+      {
+        grad->y = ctrl_pt_grad[i] + dist.y*(ctrl_pt_grad[i+1] - ctrl_pt_grad[i])/(ctrl_pts[i+1]-ctrl_pts[i]);
+        break;
+      }
+    }
+
+    if(dist.x > ctrl_pts[ctrl_pt_num-1])
+    {
+      grad->x = ctrl_pt_grad[ctrl_pt_num-1];
+    }
+    if(dist.y > ctrl_pts[ctrl_pt_num-1])
+    {
+      grad->y = ctrl_pt_grad[ctrl_pt_num-1];
+    }
+
+  }
+  else{
+    if(flg1.x) {
     grad_sum_denom1.x = wlen_cof.x * e1.x;
     grad_sum_num1.x = e1.x + obj.x * grad_sum_denom1.x;
     grad1.x =
@@ -631,6 +695,8 @@ void get_net_wlen_grad_wa(FPOS obj, NET *net, PIN *pin, FPOS *grad) {
 
   grad->x = grad1.x - grad2.x;
   grad->y = grad1.y - grad2.y;
+  }
+  
 }
 
 void net_update_init(void) {
@@ -668,7 +734,7 @@ void net_update(FPOS *st) {
     case WA:
       if(fastWL)
       {
-        return net_update__wa_fast(st);
+        return net_update_wa_fast(st);
       }
       else {
         return net_update_wa(st);
@@ -1088,6 +1154,7 @@ void net_update_wa_fast(FPOS *st) {
 #pragma omp for
     for(i = 0; i < netCNT; i++) {
       NET *net = &netInstance[i];
+      
       net->min_x = net->terminalMin.x;
       net->min_y = net->terminalMin.y;
       net->max_x = net->terminalMax.x;
@@ -1148,7 +1215,10 @@ void net_update_wa_fast(FPOS *st) {
       // we know that wlen_cof is 1/ gamma.
       // See main.cpp wcof00 and wlen.cpp: wcof_init. 
       //
-      
+      if(net->pinCNTinObject <3)// apply fast model in 2 pin net
+      {
+        continue;
+      }
       for(int j = 0; j < net->pinCNTinObject; j++) {
         PIN *pin = net->pin[j];
         FPOS fp = pin->fp;

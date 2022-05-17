@@ -72,7 +72,9 @@ struct EXP_ST {
 };
 
 extern EXP_ST *exp_st;
-
+extern const int ctrl_pt_num ;
+extern prec ctrl_pts[] ;
+extern prec ctrl_pt_grad[];
 prec get_wlen();
 prec get_wlen_wa();
 prec get_wlen_lse(void);
@@ -142,7 +144,7 @@ void net_update_init(void);
 void net_update(FPOS *st);
 void net_update_lse(FPOS *st);
 void net_update_wa(FPOS *st);
-void net_update__wa_fast(FPOS *st);
+void net_update_wa_fast(FPOS *st);
 
 prec GetHpwl();
 prec UpdateNetAndGetHpwl();

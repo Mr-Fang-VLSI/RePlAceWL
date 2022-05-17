@@ -330,6 +330,11 @@ replace_external::set_net_weight_scale(double net_weight_scale) {
   netWeightScale = net_weight_scale;
 }
 
+void
+replace_external::set_isPlot(bool plot) {
+  isPlot = plot;
+}
+
 bool 
 replace_external::init_replace() {
   if( lef_stor.size() == 0 ) {
