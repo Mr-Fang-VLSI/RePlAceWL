@@ -766,6 +766,7 @@ extern TERM *terminalInstance;
 extern NET *netInstance;
 extern HASH_MAP< std::string, int > netNameMap;
 
+
 // structure for *.scl
 extern ROW *row_st;
 extern int row_cnt;

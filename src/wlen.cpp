@@ -44,9 +44,11 @@
 #include <cstring>
 #include <iomanip>
 #include <omp.h>
+#include <iostream>
 #include <unordered_map>
 #include <fstream>
 #include <sstream>
+#include <vector>
 
 #include "replace_private.h"
 #include "macro.h"
@@ -54,7 +56,7 @@
 #include "wlen.h"
 
 #include "lefdefIO.h"
-
+using namespace std;
 using std::min;
 using std::max;
 using std::make_pair;
@@ -80,12 +82,11 @@ FPOS dp_wlen_weight;
 FPOS base_wcof;
 FPOS wlen_cof;
 FPOS wlen_cof_inv;
+prec fastWLCPU;
 EXP_ST *exp_st;
 
- const int ctrl_pt_num  = 3;
- prec ctrl_pts[ctrl_pt_num] = {-2000,0.0,2000} ;
- prec ctrl_pt_grad[ctrl_pt_num]= {1.0,0.0,-1.0};
-
+// extern vector<prec> ctrl_pts;
+// extern vector<FPOS> ctrl_pt_grad;
 void SetMAX_EXP_wlen() {
   MAX_EXP = 300;
   NEG_MAX_EXP = -300;
@@ -396,6 +397,8 @@ void wlen_grad(int cell_idx, FPOS *grad) {
   }
   grad->x *= -1.0 * gp_wlen_weight.x;
   grad->y *= -1.0 * gp_wlen_weight.y;
+  // cout<<"grad->x == "<<grad->x<<endl;
+  // cout<<"grad->y == "<<grad->y<<endl;
 }
 
 void wlen_grad2_wa(FPOS *grad) {
@@ -610,54 +613,126 @@ void get_net_wlen_grad_wa(FPOS obj, NET *net, PIN *pin, FPOS *grad) {
   FPOS sum_num2 = net->sum_num2;
   FPOS sum_denom1 = net->sum_denom1;
   FPOS sum_denom2 = net->sum_denom2;
+  
   if(fastWL &&net->pinCNTinObject == 2)
   {
+    //cout<<"fast gradient debug 0"<<endl;
     PIN *pin1;
     pin1 = net->pin[1 - pin->pinIDinNet];
     
 
     FPOS fp0,fp1;
-    fp0 = pin->fp;
-    fp1 = pin1->fp;
-
+    // if(!pin->term)
+    // {
+      fp0.x = moduleInstance[pin->moduleID].center.x + moduleInstance[pin->moduleID].pof[pin->pinIDinModule].x;
+      fp0.y = moduleInstance[pin->moduleID].center.y + moduleInstance[pin->moduleID].pof[pin->pinIDinModule].y;
+    // }
+    // else 
+    // {
+    //   fp0 = pin->fp;
+    // }
+    // if(!pin1->term)
+    // {
+      fp1.x = moduleInstance[pin1->moduleID].center.x + moduleInstance[pin1->moduleID].pof[pin->pinIDinModule].x;
+      fp1.y = moduleInstance[pin1->moduleID].center.y + moduleInstance[pin1->moduleID].pof[pin->pinIDinModule].y;
+    // }
+    // else 
+    // {
+    //   fp1 = pin1->fp;
+    // }
+    
+    
+    // cout<<"Pin module id is"<<pin->moduleID;
+    // cout<<" module id is at"<<moduleInstance[pin->moduleID].center.x<<" "<<moduleInstance[pin->moduleID].center.y;
+    // cout<<" fp 0 "<<fp0.x<<" "<<fp0.y<<endl;
+    // cout<<"Pin1 module id is"<<pin1->moduleID;
+    // cout<<" module id is at"<<moduleInstance[pin1->moduleID].center.x<<" "<<moduleInstance[pin1->moduleID].center.y;
+    
+    // cout<<" fp 1 "<<fp1.x<<" "<<fp1.y<<endl;
+    if(isnan(fp1.x)||isnan(fp0.x)||isnan(fp1.y)||isnan(fp0.y))
+    {
+      exit(0);
+    }
     FPOS dist;
     dist.x = fp0.x - fp1.x;
     dist.y = fp0.y - fp1.y;
-    if(dist.x < ctrl_pts[0])
+    int i = 0;
+    // cout<<"ctrl pt num is "<<ctrl_pt_num<<endl;
+    if(std::isnan(dist.x))
     {
-      grad->x = ctrl_pt_grad[0];
+      // cout<<"it is nan"<<endl;
+      // cout<<dist.x<<endl;
     }
-    if(dist.y < ctrl_pts[0])
+    else if(dist.x < ctrl_pts[0])
     {
-      grad->y = ctrl_pt_grad[0];
+      grad->x = ctrl_pt_grad.at(0).x;
+      // cout<<" < min grad x = "<<grad->x<<endl;
     }
+    else if(dist.x > ctrl_pts[ctrl_pt_num-1])
+    {
+      grad->x = ctrl_pt_grad[ctrl_pt_num-1].x;
+      // cout<<" > max grad x = "<<grad->x<<endl;
+    }
+    else{
+      //cout<<"fast gradient debug 1"<<endl;
+      prec interval = 1000.00/(ctrl_pt_num-1);
+      i = (int) ((dist.x+500.0)/interval);
+        cout<<"module id is" << pin->moduleID;
+        cout<<"dist x = "<<dist.x<<endl;
+        cout<<"i = "<<i<<endl;
+      
+      // cout<<"i = "<<i<<endl;
+      
+      // cout<<"module id"<<pin->moduleID<<endl;
+      grad->x = ctrl_pt_grad[i].x + (dist.x - ctrl_pts[i])*(ctrl_pt_grad[i+1].x - ctrl_pt_grad[i].x)/(ctrl_pts[i+1]-ctrl_pts[i]);
+      
+        cout<<"grad x = "<<grad->x<<endl;
+      
+    }
+
+  //cout<<"fast gradient debug 2"<<endl;
+    if(std::isnan(dist.y))
+    {
+      
+    }
+    else if(dist.y < ctrl_pts[0])
+    {
+      grad->y = ctrl_pt_grad[0].y;
+    }
+    else if(dist.y > ctrl_pts[ctrl_pt_num-1])
+    {
+      grad->y = ctrl_pt_grad[ctrl_pt_num-1].y;
+    }
+    else{
+      //cout<<"fast gradient debug 3"<<endl;netInstance
+      prec interval = 1000.0/(ctrl_pt_num-1);
+      i = (int) ((dist.y+500.0)/interval);
+      grad->y = ctrl_pt_grad[i].y + (dist.y - ctrl_pts[i])*(ctrl_pt_grad[i+1].y - ctrl_pt_grad[i].y)/(ctrl_pts[i+1]-ctrl_pts[i]);
+    }
+    /* disgard
+    // for(int i = 0;i < ctrl_pt_num-1;++i)// can be improved : calculate the interval instead of for+if
+    // {
+    //   if(dist.x > ctrl_pts[i]&&dist.x > ctrl_pts[i+1])
+    //   {
+    //     grad->x = ctrl_pt_grad[i] + dist.x*(ctrl_pt_grad[i+1] - ctrl_pt_grad[i])/(ctrl_pts[i+1]-ctrl_pts[i]);
+    //     break;rad
+    //   }
+    // }
+
+    // for(int i = 0;i < ctrl_pt_num-1;++i)
+    // {
+    //   if(dist.y > ctrl_pts[i]&&dist.y > ctrl_pts[i+1])
+    //   {
+    //     grad->y = ctrl_pt_grad[i] + dist.y*(ctrl_pt_grad[i+1] - ctrl_pt_grad[i])/(ctrl_pts[i+1]-ctrl_pts[i]);
+    //     break;
+    //   }
+    // }
+    */
+
     
-    for(int i = 0;i < ctrl_pt_num-1;++i)
-    {
-      if(dist.x > ctrl_pts[i]&&dist.x > ctrl_pts[i+1])
-      {
-        grad->x = ctrl_pt_grad[i] + dist.x*(ctrl_pt_grad[i+1] - ctrl_pt_grad[i])/(ctrl_pts[i+1]-ctrl_pts[i]);
-        break;
-      }
-    }
 
-    for(int i = 0;i < ctrl_pt_num-1;++i)
-    {
-      if(dist.y > ctrl_pts[i]&&dist.y > ctrl_pts[i+1])
-      {
-        grad->y = ctrl_pt_grad[i] + dist.y*(ctrl_pt_grad[i+1] - ctrl_pt_grad[i])/(ctrl_pts[i+1]-ctrl_pts[i]);
-        break;
-      }
-    }
-
-    if(dist.x > ctrl_pts[ctrl_pt_num-1])
-    {
-      grad->x = ctrl_pt_grad[ctrl_pt_num-1];
-    }
-    if(dist.y > ctrl_pts[ctrl_pt_num-1])
-    {
-      grad->y = ctrl_pt_grad[ctrl_pt_num-1];
-    }
+    
+    
 
   }
   else{
@@ -725,7 +800,208 @@ void net_update_init(void) {
     }
   }
 }
+void fastWL_init(int controlNum)//controlNum must be odd
+{
+  
+  // std::cout<<" size "<< ctrl_pt_grad.size()<<endl;
+  // std::cout<<"fastwl_init debug 0 "<<controlNum<<" size "<< ctrl_pt_grad.size()<<endl;
+  ctrl_pt_num = controlNum;
+  // free(ctrl_pts);
+  // free(ctrl_pt_grad);
+  // ctrl_pt_grad = (struct FPOS*)malloc(controlNum*sizeof(FPOS));
+  // ctrl_pts = (prec*)malloc(controlNum*sizeof(prec));
+  
+  // ctrl_pt_grad.resize(ctrl_pt_num);
+  // ctrl_pts.resize(ctrl_pt_num);
+  // std::cout<<" size "<< ctrl_pt_grad.size()<<endl;
+  //set ctrl_pts,
+  prec interval = (prec)1000.0 /((prec)controlNum-1.0) ;
+  // std::cout<<"fastwl_init debug 0.1 "<<endl;
+  ctrl_pts.push_back(-500.0);
+  // std::cout<<"fastwl_init debug 0.2 "<< ctrl_pts.at(0)<<endl;
+  FPOS zerofp;
+  zerofp.SetZero();
+  ctrl_pt_grad.push_back(zerofp);
+  // std::cout<<"fastwl_init debug 0.3 "<<endl;
+  // cout<<"fastwl_init debug 1"<<endl;
+  // cout<<ctrl_pts[0]<<endl;
+  // std::cout<<" size "<< ctrl_pt_grad.size()<<endl;
+  for(int i = 1;i<controlNum;i++)
+  {
+    ctrl_pts.push_back(ctrl_pts[i-1]+interval);
+    ctrl_pt_grad.push_back(zerofp);
+    ctrl_pt_grad[i].x = ctrl_pt_grad[i].y = 0.0;
+    // cout<<ctrl_pts.at(i)<<endl;
+  }
+  // cout<<"fastwl_init debug 2"<< ctrl_pt_grad.size()<<":"<<endl;
+}
 
+void fastWL_update()
+{
+  //update ctgrl_pt_grad with new wcof
+  // cout<<"fastwl_update debug 0"<<endl;
+  // fastWL_init(ctrl_pt_num);
+  // cout<<"fastwl_update debug 0.1 size = "<<ctrl_pts.size()<<endl;
+  // cout<<"fastwl_update debug 0.1 size = "<<ctrl_pt_grad.size()<<endl;
+  // for(int i = 0;i < ctrl_pts.size();i++)
+  // {
+  //   cout<<ctrl_pts.at(i)<<endl;
+  //   // cout<<ctrl_pt_grad[i].x<<endl;
+  // }
+  for(int i = 0;i < ctrl_pt_num;i++)
+  {
+    // cout<<"fastwl_update debug 0.1"<<" i = "<<i<<endl;
+    if(i!=(ctrl_pt_num-1)/2)
+    {
+      // cout<<"fastwl_update debug 0.2"<<" i = "<<i<<endl;
+      // cout<<"fastwl_update debug 0.2"<<" ctrl pt "<<ctrl_pts[i]<<endl;
+      // cout<<"pts size = "<<ctrl_pts.size()<<endl;
+      // cout<<"fastwl_update debug 0.2"<<" ctrl pt grad "<<ctrl_pt_grad[i].x<<endl;
+      cal_2pin_WA_grads(ctrl_pts[i],ctrl_pt_grad[i]);
+      // cout<<"fastwl_update debug 0.2"<<i<<endl;
+      
+    }
+    else{
+      ctrl_pt_grad[i].SetZero();
+    }
+    // cout<<"grad for 2-pin dist = "<<ctrl_pts[i]<<" = "<<ctrl_pt_grad[i].x<<" "<<ctrl_pt_grad[i].y<<endl;
+  }
+  // cout<<"fastwl_update debug 1"<<endl;
+
+}
+
+void cal_2pin_WA_grads(prec dist,FPOS& grad)
+{
+  // cout<<"cal_2pin_wa debug 0"<<endl;
+  FPOS sum_num1, sum_num2;
+  FPOS sum_denom1, sum_denom2;
+  prec max_x,min_x;
+  max_x = dist>0.0?dist:0.0;
+  min_x = dist<0.0?dist:0.0;
+  prec exp_max_x = (dist - max_x) * wlen_cof.x;
+  prec exp_min_x = (min_x - dist) * wlen_cof.x;
+  prec exp_max_y = (dist - max_x) * wlen_cof.y;
+  prec exp_min_y = (min_x - dist) * wlen_cof.y;
+
+  prec exp_max_x_0 = (0 - max_x) * wlen_cof.x;
+  prec exp_min_x_0 = (min_x - 0) * wlen_cof.x;
+  prec exp_max_y_0 = (0 - max_x) * wlen_cof.y;
+  prec exp_min_y_0 = (min_x - 0) * wlen_cof.y;
+  // cout<<"cal 2-pin gradient exp max and min"<<exp_max_x<<" "<<exp_min_x<<endl;
+  FPOS e1,e2;
+  POS flg1,flg2;
+  //cout<<"cal_2pin_wa debug 1"<<endl;
+  if(exp_max_x > NEG_MAX_EXP) {
+          e1.x = get_exp(exp_max_x);
+          sum_num1.x += dist * e1.x;
+          sum_denom1.x += e1.x;
+          flg1.x = 1;
+  }
+  else {
+          flg1.x = 0;
+  }
+  if(exp_max_x_0 > NEG_MAX_EXP) {
+          
+          sum_denom1.x += get_exp(exp_max_x_0);
+          
+  }
+  // cout<<"cal 2-pin e1x"<<e1.x<<endl;
+  //cout<<"cal_2pin_wa debug 2"<<endl;
+  if(exp_min_x > NEG_MAX_EXP) {
+          e2.x = get_exp(exp_min_x);
+          sum_num2.x += dist * e2.x;
+          sum_denom2.x += e2.x;
+          flg2.x = 1;
+  }
+  else {
+          flg2.x = 0;
+  }
+
+  if(exp_min_x_0 > NEG_MAX_EXP) {
+          
+          sum_denom2.x += get_exp(exp_min_x_0);
+          
+  }
+  // cout<<"cal 2-pin e2x"<<e2.x<<endl;
+  //cout<<"cal_2pin_wa debug 3"<<endl;
+  if(exp_max_y > NEG_MAX_EXP) {
+          e1.y = get_exp(exp_max_y);
+          sum_num1.y += dist * e1.y;
+          sum_denom1.y += e1.y;
+          flg1.y = 1;
+  }
+  else {
+          flg1.y = 0;
+  }
+
+  if(exp_max_y_0 > NEG_MAX_EXP) {
+          
+          sum_denom1.y += get_exp(exp_max_y_0);;
+          
+  }
+  //cout<<"cal_2pin_wa debug 4"<<endl;
+  if(exp_min_y > NEG_MAX_EXP) {
+          e2.y = get_exp(exp_min_y);
+          sum_num2.y += dist * e2.y;
+          sum_denom2.y += e2.y;
+          flg2.y = 1;
+  }
+  else {
+          flg2.y = 0;
+  }
+
+  if(exp_min_y_0 > NEG_MAX_EXP) {
+         
+          sum_denom2.y += get_exp(exp_min_y_0);
+          
+  }
+
+  //cout<<"cal_2pin_wa debug 5"<<endl;
+  FPOS grad_sum_denom1,grad_sum_denom2,grad_sum_num1,grad_sum_num2;
+  FPOS grad1,grad2;
+  if(flg1.x) {
+    grad_sum_denom1.x= wlen_cof.x * e1.x;
+    grad_sum_num1.x = e1.x + dist * grad_sum_denom1.x;
+    grad1.x =
+        (grad_sum_num1.x * sum_denom1.x - grad_sum_denom1.x * sum_num1.x) /
+        (sum_denom1.x * sum_denom1.x);
+
+  }
+  // cout<<"cal 2-pin grad1x"<<grad1.x<<endl;
+  // cout<<"cal 2-pin wlencof"<<wlen_cof.x<<endl;
+  // cout<<"cal 2-pin dist"<<dist<<endl;
+  if(flg2.x) {
+    grad_sum_denom2.x = wlen_cof.x * e2.x;
+    grad_sum_num2.x = e2.x - dist * grad_sum_denom2.x;
+    grad2.x =
+        (grad_sum_num2.x * sum_denom2.x + grad_sum_denom2.x * sum_num2.x) / //((e2-200*0.01e2)*e2 + 0.01e2*200e2)/(e2^2)
+        (sum_denom2.x * sum_denom2.x);
+  }
+  // cout<<"cal 2-pin grad2x"<<grad2.x<<endl;
+  // cout<<"cal_2pin_wa debug 6"<<endl;
+  if(flg1.y) {
+    grad_sum_denom1.y = wlen_cof.y * e1.y;
+    grad_sum_num1.y = e1.y + dist * grad_sum_denom1.y;
+    grad1.y =
+        (grad_sum_num1.y * sum_denom1.y - grad_sum_denom1.y * sum_num1.y) /
+        (sum_denom1.y * sum_denom1.y);
+  }
+
+  
+  //cout<<"cal_2pin_wa debug 7"<<endl;
+  if(flg2.y) {
+    grad_sum_denom2.y = wlen_cof.y * e2.y;
+    grad_sum_num2.y = e2.y - dist * grad_sum_denom2.y;
+    grad2.y =
+        (grad_sum_num2.y * sum_denom2.y + grad_sum_denom2.y * sum_num2.y) /
+        (sum_denom2.y * sum_denom2.y);
+  }
+  // cout<<"cal_2pin_wa debug 8"<<endl;
+  grad.x = (prec)grad1.x - grad2.x;
+  grad.y = (prec)grad1.y - grad2.y;
+  // cout<<"cal_2pin_wa debug 9 "<<grad.x<<" "<< grad.y<<endl;
+  
+}
 void net_update(FPOS *st) {
   switch(WLEN_MODEL) {
     case LSE:

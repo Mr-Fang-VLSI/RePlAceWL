@@ -1,5 +1,9 @@
 #include "replace_external.h"
+#include <fstream>
+#include <iostream>
+#include <ostream>
 #include "replace_private.h"
+#include "util.h"
 #include "wlen.h"
 #include "initPlacement.h"
 #include "plot.h"
@@ -390,6 +394,10 @@ replace_external::place_cell_init_place() {
 
 bool
 replace_external::place_cell_nesterov_place() {
+  double time = 0.0f;
+  time_start(&time);
+
+
   setup_before_opt();
   if( placementMacroCNT > 0 ) {
     mGP2DglobalPlacement_main();
@@ -402,6 +410,9 @@ replace_external::place_cell_nesterov_place() {
     SaveCellPlotAsJPEG("Global Placement Result", false,
         string(dir_bnd) + string("/globalPlace"));
   }
+
+  time_end(&time);
+  cout<<"nesterov placement runtime: "<<time<<endl;
   return true;
 }
 
@@ -506,7 +517,39 @@ replace_external::update_instance_list() {
     }
   }
 }
-
+void
+replace_external::net_pinnum_statistics(){
+  NET* curNet;
+  cout<<"Total Net # :="<<netCNT<<endl;
+  int statistics[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+  int pinNum;
+  for(int i = 0;i < netCNT;i++)
+  {
+    curNet = &netInstance[i];
+    pinNum = curNet->pinCNTinObject;
+    if(pinNum<21)
+    {
+      statistics[pinNum-2]++;
+    }
+    else{
+      statistics[19]++;
+    }
+    
+  }
+  std::ofstream myfile;
+  myfile.open(defName+"state.txt");
+  if(myfile.is_open())
+  {
+    myfile << "# of Net :="<<netCNT<<"\n";
+    for(int i = 0;i<20;i++)
+    {
+      prec percent = ((prec)statistics[i]) / ((prec)netCNT);
+      cout<<defName<<" # of Net with "<<i+2<<" pins :="<<statistics[i]<<endl;
+      myfile << "# of Net with "<<i+2<<" pins :="<<statistics[i]<<"\t"<<percent<<"\n";
+    }
+  }
+  
+}
 // TODO
 bool
 replace_external::save_jpeg(const char* jpeg) {

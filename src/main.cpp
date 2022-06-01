@@ -48,6 +48,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
+#include <vector>
 
 #include "bookShelfIO.h"
 #include "lefdefIO.h"
@@ -61,6 +62,7 @@
 #include "plot.h"
 #include "wlen.h"
 #include "timing.h"
+#include "vector"
 
 #include <tcl.h>
 
@@ -112,9 +114,14 @@ vector<string> moduleNameStor;
 vector<string> terminalNameStor;
 vector<string> netNameStor;
 vector<string> cellNameStor;
+int ctrl_pt_num;
+
+vector<prec> ctrl_pts ;
+vector<FPOS>ctrl_pt_grad;
 
 TERM *terminalInstance;
 NET *netInstance;
+
 HASH_MAP< string, int > netNameMap;
 int terminalCNT;
 int netCNT;

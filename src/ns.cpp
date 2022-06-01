@@ -64,7 +64,7 @@ static int backtrack_cnt = 0;
 
 void myNesterov::nesterov_opt() {
   int last_iter = 0;
-
+  cout<<"ns opt debug 0"<<endl;
   Timing::Timing TimingInst(moduleInstance, terminalInstance, netInstance,
                             netCNT, pinInstance, pinCNT, mPinName, tPinName,
                             clockPinName, timingClock);
@@ -77,21 +77,23 @@ void myNesterov::nesterov_opt() {
   InitializationCommonVar();
 
   InitializationCellStatus();
-
+  cout<<"ns opt debug 1"<<endl;
   // if (stnCMD == true)     FLUTE_init();
 
   // x_st and y_st are exactly same, 
   // but why do we need to re-do this??
   // pre-calculates for WL forces
+  
   net_update(y_st);
 
   // pre-calculates Density forces.
   bin_update();
 
   // fill in y_wdst, y_pdst , and y_pdstl if needed
+  InitializationCoefficients();
   InitializationCostFunctionGradient(&sum_wgrad, &sum_pgrad);
 
-  InitializationCoefficients();
+  
 
   // density only preconditioner. not recommended.
   if(DEN_ONLY_PRECON) {
@@ -418,6 +420,12 @@ void myNesterov::InitializationCoefficients() {
       cellLambdaArr[i] = opt_phi_cof_local;
     }
   }
+  if(fastWL)
+  {
+    cout<< "init fast WL debug in ns 0"<<endl;
+    fastWL_init(fastWL_ctrl_num);
+  }
+  
 }
 
 void myNesterov::InitializationPrecondition() {
@@ -644,7 +652,7 @@ int myNesterov::DoNesterovOptimization(Timing::Timing &TimingInst) {
         time_start(&time);
       };
       int j = 0;
-#pragma omp parallel default(none) private(j) shared(gcell_st)
+#pragma omp parallel default(none) private(j) shared(gcell_st) shared(net_update_runtime)
       {
         FPOS u, v;
         FPOS half_desize;
@@ -677,6 +685,7 @@ int myNesterov::DoNesterovOptimization(Timing::Timing &TimingInst) {
       if(timeon) {
         time_end(&time);
         cout << "net update: " << time << endl;
+        net_update_runtime+=time;
         time_start(&time);
       }
 
@@ -912,7 +921,7 @@ void myNesterov::malloc_free() {
 void myNesterov::SummarizeNesterovOpt(int last_index) {
   prec tot_hpwl_y;
   prec tot_hpwl_x;
-
+  cout<<"Net update runtime := "<<net_update_runtime<<endl;
   if(STAGE == mGP2D) {
     mGP2D_iterCNT = last_index + 1;
     hpwl_mGP2D = it->tot_hpwl;
@@ -1361,6 +1370,10 @@ void myNesterov::UpdateNesterovIter(int iter, struct ITER *it,
   it->dis00 = get_dis(z_st, y_st, N);
   it->wcof = get_wlen_cof(it->ovfl);
   wlen_cof = fp_mul(base_wcof, it->wcof);
+  if(fastWL)
+  {
+    fastWL_update();
+  }
   wlen_cof_inv = fp_inv(wlen_cof);
   pcofArr[iter % 100] = opt_phi_cof;
   // if (constraintDrivenCMD) {

@@ -105,6 +105,8 @@ class myNesterov {
   std::vector<pair<int, bool> > timingChkArr;
   bool isTimingIter(int ovlp);
 
+  int fastWL_ctrl_num = 21;
+  prec net_update_runtime = 0;
   // myNesterov::functions
   void InitializationCommonVar(void);
   void InitializationCellStatus(void);

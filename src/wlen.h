@@ -41,12 +41,13 @@
 #ifndef __PL_WLEN__
 #define __PL_WLEN__
 
+#include <vector>
 #include "replace_private.h"
 #include "opt.h"
 
 enum { NoneWpre, PcntWpre, WlenWpre };
 #define WLEN_PRE /* NoneWpre */ PcntWpre /* WlenWpre */
-
+using namespace std;
 extern int wcof_flg;
 extern prec hpwl_mGP3D;
 extern prec hpwl_mGP2D;
@@ -64,7 +65,12 @@ extern FPOS dp_wlen_weight;
 extern FPOS base_wcof;
 extern FPOS wlen_cof;
 extern FPOS wlen_cof_inv;
+extern prec fastWLCPU;
+extern prec WLCPU;
+extern int ctrl_pt_num ;
 
+extern vector<prec>ctrl_pts;
+extern vector<FPOS>ctrl_pt_grad;
 struct EXP_ST {
   prec x;
   prec val;
@@ -72,9 +78,7 @@ struct EXP_ST {
 };
 
 extern EXP_ST *exp_st;
-extern const int ctrl_pt_num ;
-extern prec ctrl_pts[] ;
-extern prec ctrl_pt_grad[];
+
 prec get_wlen();
 prec get_wlen_wa();
 prec get_wlen_lse(void);
@@ -164,6 +168,11 @@ prec get_mac_hpwl(int idx);
 prec net_update_hpwl_mac(void);
 void UpdateNetMinMaxPin2();
 void update_pin2(void);
+
+void fastWL_init(int controlNum);
+
+void fastWL_update();
+void cal_2pin_WA_grads(prec dist,FPOS& grad);
 
 enum { LSE, WA };
 

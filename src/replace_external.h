@@ -60,6 +60,9 @@ public:
   void set_routability_driven(bool mode);
 
   void set_fastWL(bool fast);
+  void net_pinnum_statistics();
+
+  
   void set_isPlot(bool plot);
   
   bool init_replace();
@@ -105,6 +108,7 @@ private:
   bool write_bookshelf_mode;
   double unit_r;
   double unit_c;
+  
 };
 
 #endif
