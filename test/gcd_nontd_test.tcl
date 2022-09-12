@@ -12,7 +12,7 @@ set fname ispd18_test${num}
 replace_external rep
 
 # Import LEF/DEF files
-rep set_fastWL 1
+rep set_fastWL 0
 rep set_isPlot 0
 #rep import_lef ${lib_dir}/NangateOpenCellLibrary.lef
 #rep import_def ${design_dir}/${design}.def
