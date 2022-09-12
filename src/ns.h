@@ -44,7 +44,10 @@
 #include "replace_private.h"
 #include "opt.h"
 #include "timing.h"
-
+#include "wlen.h"
+extern prec wlgrad_update_runtime;
+extern prec runtime_2pinnet;
+extern prec netupdate_runtime_pinnet;
 class myNesterov {
  private:
   struct FPOS *x_st;
@@ -105,8 +108,13 @@ class myNesterov {
   std::vector<pair<int, bool> > timingChkArr;
   bool isTimingIter(int ovlp);
 
-  int fastWL_ctrl_num = 21;
+  int fastWL_ctrl_num = 11;
   prec net_update_runtime = 0;
+  prec bin_update_runtime = 0;
+  prec grad_update_runtime = 0;
+  
+  prec lc_update_runtime = 0;
+  
   // myNesterov::functions
   void InitializationCommonVar(void);
   void InitializationCellStatus(void);

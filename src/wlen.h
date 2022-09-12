@@ -68,9 +68,16 @@ extern FPOS wlen_cof_inv;
 extern prec fastWLCPU;
 extern prec WLCPU;
 extern int ctrl_pt_num ;
+extern FPOS FASTWL_TOT;
+extern FPOS FASTWL_HALF;
+extern FPOS FASTWL_INTERVAL;
 
-extern vector<prec>ctrl_pts;
+extern vector<FPOS>ctrl_pts;
 extern vector<FPOS>ctrl_pt_grad;
+extern vector<FPOS>linearFuncX;
+extern vector<FPOS>linearFuncY;
+extern prec runtime_2pinnet;
+extern prec netupdate_runtime_pinnet;
 struct EXP_ST {
   prec x;
   prec val;
@@ -172,7 +179,8 @@ void update_pin2(void);
 void fastWL_init(int controlNum);
 
 void fastWL_update();
-void cal_2pin_WA_grads(prec dist,FPOS& grad);
+void linearFunc_update();
+void cal_2pin_WA_grads(FPOS dist,FPOS& grad);
 
 enum { LSE, WA };
 

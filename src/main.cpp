@@ -116,8 +116,10 @@ vector<string> netNameStor;
 vector<string> cellNameStor;
 int ctrl_pt_num;
 
-vector<prec> ctrl_pts ;
+vector<FPOS> ctrl_pts ;
 vector<FPOS>ctrl_pt_grad;
+vector<FPOS>linearFuncX;
+vector<FPOS>linearFuncY;
 
 TERM *terminalInstance;
 NET *netInstance;
@@ -250,7 +252,9 @@ prec mGP2D_opt_phi_cof;
 prec cGP3D_opt_phi_cof;
 prec cGP2D_opt_phi_cof;
 prec inv_RAND_MAX;
-
+prec wlgrad_update_runtime = 0;
+prec runtime_2pinnet = 0;
+prec netupdate_runtime_pinnet = 0;
 unsigned extPt1_2ndOrder;
 unsigned extPt2_2ndOrder;
 unsigned extPt1_1stOrder;
@@ -389,6 +393,9 @@ bool trialRunCMD;
 bool autoEvalRC_CMD;
 bool onlyLG_CMD;
 bool isFastMode;
+FPOS FASTWL_TOT;
+FPOS FASTWL_HALF;
+FPOS FASTWL_INTERVAL;
 ///////////////////////////////////////////////////////////
 
 Tcl_Interp* _interp;

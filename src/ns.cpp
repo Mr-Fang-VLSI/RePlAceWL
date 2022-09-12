@@ -90,9 +90,16 @@ void myNesterov::nesterov_opt() {
   bin_update();
 
   // fill in y_wdst, y_pdst , and y_pdstl if needed
-  InitializationCoefficients();
+  cout<<"ns debug 0"<<endl;
+  if(fastWL)
+  {
+    fastWL_init(fastWL_ctrl_num);
+    fastWL_update();
+  }
   InitializationCostFunctionGradient(&sum_wgrad, &sum_pgrad);
-
+  cout<<"ns debug 1"<<endl;
+  InitializationCoefficients();
+  cout<<"ns debug 2"<<endl;
   
 
   // density only preconditioner. not recommended.
@@ -379,6 +386,7 @@ void myNesterov::InitializationCoefficients() {
     wlen_cof_inv = fp_inv(wlen_cof);
   }
   else if(STAGE == cGP2D) {
+    // cout<<"ns init cof debug 0"<<endl;
     if(placementMacroCNT > 0) {
       if(INPUT_FLG == MMS)
         cGP2D_buf_iter = mGP2D_tot_iter / 10;
@@ -398,6 +406,10 @@ void myNesterov::InitializationCoefficients() {
         pow(UPPER_PCOF, (prec)cGP2D_buf_iter);
     }
     else {
+      // cout<<"ns init cof debug 1"<<endl;
+      // cout<<"sum_wgrad = "<<sum_wgrad<<endl;
+      // cout<<"sum_pgrad = "<<sum_pgrad<<endl;
+      // cout<<"INIT_LAMBDA_COF_GP = "<<INIT_LAMBDA_COF_GP<<endl;
       opt_phi_cof = sum_wgrad / sum_pgrad * INIT_LAMBDA_COF_GP;
     }
     opt_w_cof = 0;
@@ -422,10 +434,11 @@ void myNesterov::InitializationCoefficients() {
   }
   if(fastWL)
   {
-    cout<< "init fast WL debug in ns 0"<<endl;
-    fastWL_init(fastWL_ctrl_num);
+    // cout<< "init fast WL debug in ns 0"<<endl;
+    fastWL_update();
+    
   }
-  
+  // cout<<"opt_phi_cof = "<<opt_phi_cof<<endl;
 }
 
 void myNesterov::InitializationPrecondition() {
@@ -552,7 +565,7 @@ int myNesterov::DoNesterovOptimization(Timing::Timing &TimingInst) {
   // int last_route_iter = -100;
   // int post_filler_route = 1;
 
-  bool timeon = false;
+  bool timeon = true;
   double time = 0.0f;
 
   for(i = 0; i < max_iter; i++) {
@@ -642,7 +655,7 @@ int myNesterov::DoNesterovOptimization(Timing::Timing &TimingInst) {
     // int cnt = 0;
     if(timeon) {
       time_end(&time);
-      cout << "prev: " << time << endl;
+      // cout << "prev: " << time << endl;
     }
 
     while(1) {
@@ -676,7 +689,7 @@ int myNesterov::DoNesterovOptimization(Timing::Timing &TimingInst) {
       }
       if(timeon) {
         time_end(&time);
-        cout << "inner for: " << time << endl;
+        // cout << "inner for: " << time << endl;
         time_start(&time);
       }
       // cout <<"cnt: " <<cnt <<endl;
@@ -684,7 +697,7 @@ int myNesterov::DoNesterovOptimization(Timing::Timing &TimingInst) {
       net_update(y0_st);
       if(timeon) {
         time_end(&time);
-        cout << "net update: " << time << endl;
+        // cout << "net update: " << time << endl;
         net_update_runtime+=time;
         time_start(&time);
       }
@@ -692,7 +705,8 @@ int myNesterov::DoNesterovOptimization(Timing::Timing &TimingInst) {
       bin_update();  // igkang
       if(timeon) {
         time_end(&time);
-        cout << "bin update: " << time << endl;
+        // cout << "bin update: " << time << endl;
+        bin_update_runtime+=time;
         time_start(&time);
       }
 
@@ -706,14 +720,16 @@ int myNesterov::DoNesterovOptimization(Timing::Timing &TimingInst) {
                            cellLambdaArr);
       if(timeon) {
         time_end(&time);
-        cout << "GetCost Grad: " << time << endl;
+        // cout << "GetCost Grad: " << time << endl;
+        grad_update_runtime += time;
         time_start(&time);
       }
 
       get_lc(y_st, y_dst, y0_st, y0_dst, &it0, N);
       if(timeon) {
         time_end(&time);
-        cout << "get_lc : " << time << endl;
+        // cout << "get_lc : " << time << endl;
+        lc_update_runtime += time;
         time_start(&time);
       }
 
@@ -922,6 +938,12 @@ void myNesterov::SummarizeNesterovOpt(int last_index) {
   prec tot_hpwl_y;
   prec tot_hpwl_x;
   cout<<"Net update runtime := "<<net_update_runtime<<endl;
+  cout<<"Bin update runtime := "<<bin_update_runtime<<endl;
+  cout<<"Grad update runtime := "<<grad_update_runtime<<endl;
+  cout<<"lc update runtime := "<<lc_update_runtime<<endl;
+  cout<<"wlgrad update runtime := "<<wlgrad_update_runtime<<endl;
+  cout<<"2pin net grad update runtime :="<<runtime_2pinnet<<endl;
+  cout<<"2pin net update runtime :="<<netupdate_runtime_pinnet<<endl;
   if(STAGE == mGP2D) {
     mGP2D_iterCNT = last_index + 1;
     hpwl_mGP2D = it->tot_hpwl;
@@ -1007,13 +1029,34 @@ void getCostFuncGradient2(struct FPOS *dst, struct FPOS *wdst,
     for(i = 0; i < N; i++) {
       cell = &gcell_st[i];
       cellLambdaArr[i] *= dampParam;
+      
       if(cell->flg == Macro && (STAGE == cGP3D || STAGE == cGP2D)) {
         wgrad.SetZero();
         pgrad.SetZero();
         pgradl.SetZero();
       }
       else {// not macro
+        bool timeon = true;
+        double time = 0.0f;
+        if(timeon) {
+          
+        // cout << "GetCost Grad: " << time << endl;
+          time_start(&time);
+        }
         wlen_grad(i, &wgrad);
+        if(timeon) {
+          time_end(&time);
+        // cout << "GetCost Grad: " << time << endl;
+          // grad_update_runtime += time;
+          // lc_update_runtime += time;
+          wlgrad_update_runtime += time;
+          time_start(&time);
+        }
+        // if(wgrad.x!=0.0||wgrad.y!=0.0)
+        // {
+        //   cout<<"wgrad "<<i<<" : "<<wgrad.x<<" "<<wgrad.y<<endl;
+        // }
+        
         if(STAGE == mGP2D) {
           if(constraintDrivenCMD == false) {
             potn_grad_2D(i, &pgrad);
@@ -1066,13 +1109,21 @@ void getCostFuncGradient2(struct FPOS *dst, struct FPOS *wdst,
       pre.y = wpre.y + opt_phi_cof * charge_dpre.y;
       //}
       //#endif
+      if(isnan(pre.x))
+      {
+        cout<<"wpre x = "<<wpre.x<<endl;
+        cout<<"opt_phi_cof = "<<opt_phi_cof<<endl;
+        cout<<"charge_dpre.x = "<<charge_dpre.x<<endl;
+        exit(0);
+      }
       if(pre.x < MIN_PRE)
         pre.x = MIN_PRE;
       if(pre.y < MIN_PRE)
         pre.y = MIN_PRE;
-
+      
       dst[i].x /= pre.x;
       dst[i].y /= pre.y;
+      // cout<<"dst "<<i<<":= "<<dst[i].x<<" pre x = "<<pre.x<<endl;
     }
   }
   //    if(timeon) { time_end(&time);cout << "!!: " << time << endl;}
@@ -1372,6 +1423,7 @@ void myNesterov::UpdateNesterovIter(int iter, struct ITER *it,
   wlen_cof = fp_mul(base_wcof, it->wcof);
   if(fastWL)
   {
+    // cout<<"fast wl update"<<endl;
     fastWL_update();
   }
   wlen_cof_inv = fp_inv(wlen_cof);
@@ -1433,7 +1485,7 @@ void myNesterov::UpdateNesterovIter(int iter, struct ITER *it,
     it->wlen.SetZero();
     it->tot_wlen = 0;
   }
-
+  
   if((iter == 1 || iter % 10 == 0) && (isPlot || plotCellCMD)) {
     cell_update(x_st, N);
 
