@@ -1421,10 +1421,20 @@ void myNesterov::UpdateNesterovIter(int iter, struct ITER *it,
   it->dis00 = get_dis(z_st, y_st, N);
   it->wcof = get_wlen_cof(it->ovfl);
   wlen_cof = fp_mul(base_wcof, it->wcof);
+  bool timeon = true;
+  double time = 0.0f;
   if(fastWL)
   {
     // cout<<"fast wl update"<<endl;
+    if(timeon)
+      time_start(&time);
     fastWL_update();
+    if(timeon) {
+      time_end(&time);
+      netupdate_runtime_pinnet += time;
+      
+      // cout << "prev: " << time << endl;
+    }
   }
   wlen_cof_inv = fp_inv(wlen_cof);
   pcofArr[iter % 100] = opt_phi_cof;
