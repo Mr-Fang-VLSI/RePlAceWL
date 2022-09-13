@@ -6,13 +6,14 @@ set design gcd
 set lib_dir ./library/nangate45/
 set bench_dir ./library/
 set design_dir ./design/nangate45/${design}
-set num   1
+set num   $env(NUM)
+set fastWL $env(FASTWL)
 set fname ispd18_test${num}
 
 replace_external rep
 
 # Import LEF/DEF files
-rep set_fastWL 1
+rep set_fastWL $fastWL
 rep set_isPlot 0
 #rep import_lef ${lib_dir}/NangateOpenCellLibrary.lef
 #rep import_def ${design_dir}/${design}.def
