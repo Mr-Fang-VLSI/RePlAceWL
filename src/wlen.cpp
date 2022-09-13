@@ -1023,7 +1023,9 @@ void fastWL_update() {
     // linearFunc.push_back(zerofp);
     // cout<<ctrl_pts.at(i).x<<endl;
     // cout<<ctrl_pts.at(i).y<<endl;
+
   }
+  linearFunc_update();
 }
 void linearFunc_update() {
   FPOS inteval;
