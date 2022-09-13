@@ -822,9 +822,224 @@ void get_net_wlen_grad_wa(FPOS obj, NET *net, PIN *pin, FPOS *grad) {
           (grad_sum_num2.y * sum_denom2.y + grad_sum_denom2.y * sum_num2.y) /
           (sum_denom2.y * sum_denom2.y);
     }
-
+    
     grad->x = grad1.x - grad2.x;
     grad->y = grad1.y - grad2.y;
+  }
+
+  if(fastWL && net->pinCNTinObject == 2)
+  {
+    FPOS grad_sum_num1, grad_sum_num2;
+    FPOS grad_sum_denom1, grad_sum_denom2;
+    FPOS grad1;
+    FPOS grad2;
+    FPOS e1 = pin->e1;
+    FPOS e2 = pin->e2;
+    POS flg1 = pin->flg1;
+    POS flg2 = pin->flg2;
+    FPOS sum_num1 = net->sum_num1;
+    FPOS sum_num2 = net->sum_num2;
+    FPOS sum_denom1 = net->sum_denom1;
+    FPOS sum_denom2 = net->sum_denom2;
+
+    if(flg1.x) {
+      grad_sum_denom1.x = wlen_cof.x * e1.x;
+      grad_sum_num1.x = e1.x + obj.x * grad_sum_denom1.x;
+      grad1.x =
+          (grad_sum_num1.x * sum_denom1.x - grad_sum_denom1.x * sum_num1.x) /
+          (sum_denom1.x * sum_denom1.x);
+    }
+
+    if(flg1.y) {
+      grad_sum_denom1.y = wlen_cof.y * e1.y;
+      grad_sum_num1.y = e1.y + obj.y * grad_sum_denom1.y;
+      grad1.y =
+          (grad_sum_num1.y * sum_denom1.y - grad_sum_denom1.y * sum_num1.y) /
+          (sum_denom1.y * sum_denom1.y);
+    }
+
+    if(flg2.x) {
+      grad_sum_denom2.x = wlen_cof.x * e2.x;
+      grad_sum_num2.x = e2.x - obj.x * grad_sum_denom2.x;
+      grad2.x =
+          (grad_sum_num2.x * sum_denom2.x + grad_sum_denom2.x * sum_num2.x) /
+          (sum_denom2.x * sum_denom2.x);
+    }
+
+    if(flg2.y) {
+      grad_sum_denom2.y = wlen_cof.y * e2.y;
+      grad_sum_num2.y = e2.y - obj.y * grad_sum_denom2.y;
+      grad2.y =
+          (grad_sum_num2.y * sum_denom2.y + grad_sum_denom2.y * sum_num2.y) /
+          (sum_denom2.y * sum_denom2.y);
+    }
+    FPOS grad_ref;
+    grad_ref.x = grad1.x - grad2.x;
+    grad_ref.y = grad1.y - grad2.y;
+
+    PIN *pin1;
+
+    pin1 = net->pin[1 - pin->pinIDinNet];
+    // cout<<"fast gradient debug 0.1"<<endl;
+
+    FPOS fp0, fp1;
+    // if(!pin->term)
+    // {
+    // fp0.x = moduleInstance[pin->moduleID].center.x +
+    // moduleInstance[pin->moduleID].pof[pin->pinIDinModule].x; fp0.y =
+    // moduleInstance[pin->moduleID].center.y +
+    // moduleInstance[pin->moduleID].pof[pin->pinIDinModule].y;
+    // }
+    // else
+    // {
+    fp0 = pin->fp;
+    // }
+    // if(!pin1->term)
+    // {
+    // fp1.x = moduleInstance[pin1->moduleID].center.x +
+    // moduleInstance[pin1->moduleID].pof[pin->pinIDinModule].x; fp1.y =
+    // moduleInstance[pin1->moduleID].center.y +
+    // moduleInstance[pin1->moduleID].pof[pin->pinIDinModule].y;
+    // }
+    // else
+    // {
+    fp1 = pin1->fp;
+    // }
+
+    // cout<<"Pin module id is"<<pin->moduleID;
+    // cout<<" module id is at"<<moduleInstance[pin->moduleID].center.x<<"
+    // "<<moduleInstance[pin->moduleID].center.y; cout<<" fp 0 "<<fp0.x<<"
+    // "<<fp0.y<<endl; cout<<"Pin1 module id is"<<pin1->moduleID; cout<<" module
+    // id is at"<<moduleInstance[pin1->moduleID].center.x<<"
+    // "<<moduleInstance[pin1->moduleID].center.y; cout<<"fast gradient debug
+    // 0.2"<<endl; cout<<" fp 1 "<<fp1.x<<" "<<fp1.y<<endl;
+    // if(isnan(fp1.x)||isnan(fp0.x)||isnan(fp1.y)||isnan(fp0.y))
+    // {
+    //   exit(0);
+    // }
+    FPOS dist;
+    dist.x = fp0.x - fp1.x;
+    dist.y = fp0.y - fp1.y;
+    int i = 0;
+    // cout<<"ctrl pt num is "<<ctrl_pt_num<<endl;
+    // if(std::isnan(dist.x))
+    // {
+    //   // cout<<"it is nan"<<endl;
+    //   // cout<<dist.x<<endl;
+    // }
+    // else
+    // prec pts_start = ctrl_pts[0].x;
+    // prec pts_end = ctrl_pts[0].x;
+    if(dist.x <= ctrl_pts[0].x) {
+      grad->x = ctrl_pt_grad.at(0).x;
+      // grad->x = -1.0007;
+      // cout<<" < min grad x = "<<grad->x<<endl;
+    }
+    else if(dist.x >= ctrl_pts[ctrl_pt_num - 1].x) {
+      grad->x = ctrl_pt_grad[ctrl_pt_num - 1].x;
+      // grad->x = 1.0007;
+      // cout<<" > max grad x = "<<grad->x<<endl;
+    }
+    else {
+      // cout<<"fast gradient debug 1"<<endl;
+      prec tot = FASTWL_HALF.x;
+
+      // prec interval = FASTWL_INTERVAL.x;
+
+      i = (int)((dist.x + tot) * FASTWL_INTERVAL.x);
+      // cout<<"fast gradient debug 1.1 i = "<<i<<endl;
+      // cout<<"fast gradient debug 1.1 dist = "<<dist.x<<endl;
+      // cout<<"i = "<<i<<endl;
+
+      // cout<<"module id"<<pin->moduleID<<endl;
+      // grad->x = ctrl_pt_grad[i].x + (dist.x -
+      // ctrl_pts[i])*(ctrl_pt_grad[i+1].x -
+      // ctrl_pt_grad[i].x)/(ctrl_pts[i+1]-ctrl_pts[i]);
+      grad->x = linearFuncX[i].x * dist.x + linearFuncX[i].y;
+      // cout<<"fast gradient debug 1.2"<<endl;
+      // if(i ==0 ||i ==20)
+      // {
+      //   //  cout<<"module id is" << pin->moduleID<< "at "<<
+      //   moduleInstance[pin->moduleID].center.x<<"
+      //   "<<moduleInstance[pin->moduleID].center.y;
+      //   //   cout<<" dist x = "<<dist.x<<endl;
+      //   //   cout<<"i = "<<i<<endl;
+      //   //   cout<<"grad x = "<<grad->x<<endl;
+      // }
+      // if(grad->x > 3||grad->x <-3)
+      // {
+      //   cout<<"fast gradient debug 1.1 dist = "<<dist.x<<endl;
+      //   cout<<"i = "<<i<<endl;
+      //   cout<<"tot = "<<tot<<endl;
+      //   cout<<"grad x  = "<<grad->x<<endl;
+      //   cout<<"linearFuncX[i].x  = "<<linearFuncX[i].x<<endl;
+      //   cout<<"linearFuncX[i].y  = "<<linearFuncX[i].y<<endl;
+      //   cout<<"ctrl_pts[i].x  = "<<ctrl_pts[i].x <<endl;
+      //   cout<<"ctrl_pts[i+1].x   = "<<ctrl_pts[i+1].x <<endl;
+      // }
+    }
+    // cout<<"fast gradient debug 0.3"<<endl;
+    // cout<<"fast gradient debug 2"<<endl;
+    // if(std::isnan(dist.y))
+    // {
+
+    // }
+    // else
+    if(dist.y <= ctrl_pts[0].y) {
+      grad->y = ctrl_pt_grad[0].y;
+    }
+    else if(dist.y >= ctrl_pts[ctrl_pt_num - 1].y) {
+      grad->y = ctrl_pt_grad[ctrl_pt_num - 1].y;
+    }
+    else {
+      // cout<<"fast gradient debug 3"<<endl;
+
+      prec tot = FASTWL_HALF.y;
+
+      // prec interval = FASTWL_INTERVAL.y;
+      i = (int)((dist.y + tot) * FASTWL_INTERVAL.y);
+      // grad->y = ctrl_pt_grad[i].y + (dist.y -
+      // ctrl_pts[i])*(ctrl_pt_grad[i+1].y -
+      // ctrl_pt_grad[i].y)/(ctrl_pts[i+1]-ctrl_pts[i]);
+      grad->y = linearFuncY[i].x * dist.y + linearFuncY[i].y;
+      // if(grad->y > 2||grad->y <-2)
+      // {
+      //   cout<<"fast gradient debug 3.1 dist = "<<dist.y<<endl;
+      //   cout<<"i = "<<i<<endl;
+      //   cout<<"tot = "<<tot<<endl;
+      //   cout<<"grad y  = "<<grad->y<<endl;
+      //   cout<<"k = "<<linearFuncY[i].x<<endl;
+      //   cout<<"b = "<<linearFuncY[i].y<<endl;
+      // }
+    }
+    prec delta = 0.03;
+    if(grad_ref.x - grad->x>delta ||grad_ref.x - grad->x<-delta)
+    {
+      cout<<"ref grad x = "<<grad_ref.x<< " grad x = "<<grad->x<<endl;
+      prec tot = FASTWL_HALF.x;
+
+
+      i = (int)((dist.x + tot) * FASTWL_INTERVAL.x);
+      cout<<"i = "<<i<<endl;
+      cout<<"dist.x = "<<dist.x<<endl;
+      cout<<1.0/FASTWL_INTERVAL.x<<endl;
+      cout<<tot<<endl;
+      cout<<"k = "<<linearFuncX[i].x<<" b = "<<linearFuncX[i].y<<endl;
+      cout<<"ctrl_pt_grad[i].x = " <<ctrl_pt_grad[i].x<<endl;
+    }
+    if(grad_ref.y - grad->y>delta ||grad_ref.y - grad->y<-delta)
+    {
+      cout<<"ref grad y = "<<grad_ref.y<<"grad y = "<<grad->y<<endl;
+      prec tot = FASTWL_HALF.y;
+
+
+      i = (int)((dist.y + tot) * FASTWL_INTERVAL.y);
+      cout<<"i = "<<i<<endl;
+      cout<<"dist.y = "<<dist.y<<endl;
+      cout<<1.0/FASTWL_INTERVAL.y<<endl;
+      cout<<tot<<endl;
+    }
+    
   }
 }
 
@@ -1024,6 +1239,7 @@ void fastWL_update() {
     // cout<<ctrl_pts.at(i).x<<endl;
     // cout<<ctrl_pts.at(i).y<<endl;
   }
+  linearFunc_update();
 }
 void linearFunc_update() {
   FPOS inteval;
@@ -1038,10 +1254,7 @@ void linearFunc_update() {
         (ctrl_pt_grad[i + 1].y - ctrl_pt_grad[i].y) * FASTWL_INTERVAL.y;
     linearFuncY[i].y = ctrl_pt_grad[i].y - (linearFuncY[i].x * ctrl_pts[i].y);
     // cout<<"grad is"<<ctrl_pt_grad[i+1].x<<" "<<ctrl_pt_grad[i].x<<endl;
-    // cout<<"ipos="<<ctrl_pts[i].x<<", xk = "<<linearFuncX[i].x<<",xb
-    // ="<<linearFuncX[i].y<<" interval x"<<inteval.x<<endl; cout<<"ipos
-    // ="<<ctrl_pts[i].y<<", yk = "<<linearFuncY[i].x<<",yb
-    // ="<<linearFuncY[i].y<<" interval y"<<inteval.y<<endl;
+    // cout<<"ipos="<<ctrl_pts[i].x<<", xk = "<<linearFuncX[i].x<<",xb="<<linearFuncX[i].y<<" interval x"<<inteval.x<<endl; cout<<"ipos="<<ctrl_pts[i].y<<", yk = "<<linearFuncY[i].x<<",yb="<<linearFuncY[i].y<<" interval y"<<inteval.y<<endl;
   }
 }
 void cal_2pin_WA_grads(FPOS dist, FPOS &grad) {
@@ -1674,7 +1887,7 @@ void net_update_wa_fast(FPOS *st) {
       // we know that wlen_cof is 1/ gamma.
       // See main.cpp wcof00 and wlen.cpp: wcof_init.
       //
-      if(net->pinCNTinObject < 3)  // apply fast model in 2 pin net
+      if(net->pinCNTinObject < 2)  // apply fast model in 2 pin net
       {
         continue;
       }
