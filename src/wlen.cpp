@@ -1012,32 +1012,66 @@ void get_net_wlen_grad_wa(FPOS obj, NET *net, PIN *pin, FPOS *grad) {
       //   cout<<"b = "<<linearFuncY[i].y<<endl;
       // }
     }
-    prec delta = 0.03;
+    prec delta = 0.0;
     if(grad_ref.x - grad->x>delta ||grad_ref.x - grad->x<-delta)
     {
-      cout<<"ref grad x = "<<grad_ref.x<< " grad x = "<<grad->x<<endl;
+      // cout<<"ref grad x = "<<grad_ref.x<< " grad x = "<<grad->x<<endl;
       prec tot = FASTWL_HALF.x;
 
 
       i = (int)((dist.x + tot) * FASTWL_INTERVAL.x);
-      cout<<"i = "<<i<<endl;
-      cout<<"dist.x = "<<dist.x<<endl;
-      cout<<1.0/FASTWL_INTERVAL.x<<endl;
-      cout<<tot<<endl;
-      cout<<"k = "<<linearFuncX[i].x<<" b = "<<linearFuncX[i].y<<endl;
-      cout<<"ctrl_pt_grad[i].x = " <<ctrl_pt_grad[i].x<<endl;
+      // cout<<"i = "<<i<<endl;
+      // cout<<"dist.x = "<<dist.x<<endl;
+      // cout<<1.0/FASTWL_INTERVAL.x<<endl;
+      // cout<<tot<<endl;
+      // cout<<"k = "<<linearFuncX[i].x<<" b = "<<linearFuncX[i].y<<endl;
+      // cout<<"ctrl_pt_grad[i].x = " <<ctrl_pt_grad[i].x<<endl;
+
+      prec diff = grad_ref.x - grad->x;
+      if(diff <0)
+      {
+        diff = -diff;
+      }
+      if(grad->x>0)
+      {
+        tot_grad+=grad->x;
+      }
+      else{
+        tot_grad-=grad->x;
+      }
+      grad_tot_diff += diff;
+      i = (int)((dist.x + tot) * FASTWL_INTERVAL.x);
+      if(dist.x <= ctrl_pts[0].x||dist.x >= ctrl_pts[ctrl_pt_num - 1].x) {
+      grad_out_diff += diff;
+      }
     }
     if(grad_ref.y - grad->y>delta ||grad_ref.y - grad->y<-delta)
     {
-      cout<<"ref grad y = "<<grad_ref.y<<"grad y = "<<grad->y<<endl;
+      // cout<<"ref grad y = "<<grad_ref.y<<"grad y = "<<grad->y<<endl;
       prec tot = FASTWL_HALF.y;
 
-
+      prec diff = grad_ref.y - grad->y;
+      if(diff <0)
+      {
+        diff = -diff;
+      }
+      grad_tot_diff += diff;
       i = (int)((dist.y + tot) * FASTWL_INTERVAL.y);
-      cout<<"i = "<<i<<endl;
-      cout<<"dist.y = "<<dist.y<<endl;
-      cout<<1.0/FASTWL_INTERVAL.y<<endl;
-      cout<<tot<<endl;
+      if(dist.y <= ctrl_pts[0].y||dist.y >= ctrl_pts[ctrl_pt_num - 1].y) {
+      grad_out_diff += diff;
+      }
+    
+      if(grad->y>0)
+      {
+        tot_grad+=grad->y;
+      }
+      else{
+        tot_grad-=grad->y;
+      }
+      // cout<<"i = "<<i<<endl;
+      // cout<<"dist.y = "<<dist.y<<endl;
+      // cout<<1.0/FASTWL_INTERVAL.y<<endl;
+      // cout<<tot<<endl;
     }
     
   }

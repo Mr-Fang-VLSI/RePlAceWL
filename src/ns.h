@@ -48,6 +48,9 @@
 extern prec wlgrad_update_runtime;
 extern prec runtime_2pinnet;
 extern prec netupdate_runtime_pinnet;
+extern prec grad_tot_diff;
+extern prec grad_out_diff;
+extern prec tot_grad;
 class myNesterov {
  private:
   struct FPOS *x_st;

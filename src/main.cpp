@@ -396,6 +396,9 @@ bool isFastMode;
 FPOS FASTWL_TOT;
 FPOS FASTWL_HALF;
 FPOS FASTWL_INTERVAL;
+prec grad_tot_diff = 0;
+prec grad_out_diff = 0;
+prec tot_grad = 0;
 ///////////////////////////////////////////////////////////
 
 Tcl_Interp* _interp;

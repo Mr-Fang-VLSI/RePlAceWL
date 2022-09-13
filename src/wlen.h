@@ -78,6 +78,9 @@ extern vector<FPOS>linearFuncX;
 extern vector<FPOS>linearFuncY;
 extern prec runtime_2pinnet;
 extern prec netupdate_runtime_pinnet;
+extern prec grad_tot_diff;
+extern prec grad_out_diff;
+extern prec tot_grad;
 struct EXP_ST {
   prec x;
   prec val;
