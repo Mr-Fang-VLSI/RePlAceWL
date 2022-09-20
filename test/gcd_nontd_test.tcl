@@ -6,7 +6,7 @@ set design gcd
 set lib_dir ./library/nangate45/
 set bench_dir ./library/
 set design_dir ./design/nangate45/${design}
-set num   10
+set num   2
 set fname ispd18_test${num}
 
 replace_external rep

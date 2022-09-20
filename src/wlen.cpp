@@ -1239,6 +1239,7 @@ void fastWL_update() {
   prec totX = intervalX * ((prec)ctrl_pt_num - 1.0);
   prec intervalY = (prec)2.56 / wlen_cof.GetX() / ((prec)ctrl_pt_num - 1.0);
   prec totY = intervalY * ((prec)ctrl_pt_num - 1.0);
+  cout<<"wlen cof = "<<wlen_cof.GetX()<<" "<<wlen_cof.GetY()<<endl;
   // prec intervalX = (prec)25.6/wlen_cof.GetX() /((prec)ctrl_pt_num -1.0) ;
   // prec totX = intervalX*((prec)ctrl_pt_num -1.0);
   // prec intervalY = (prec)25.6/wlen_cof.GetX() /((prec)ctrl_pt_num -1.0) ;
@@ -1622,6 +1623,8 @@ prec net_update_hpwl_mac(void) {
 
     total_hpwl.x += (net->max_x - net->min_x);
     total_hpwl.y += (net->max_y - net->min_y);
+    // cout<<"distance rate = "<<total_hpwl.x/ wlen_cof.x<<endl;
+    // cout<<"distance rate = "<<total_hpwl.y/ wlen_cof.y<<endl;
   }
 
   /* total_hpwl_xy = total_hpwl.x + total_hpwl.y; */
@@ -1724,7 +1727,17 @@ void net_update_wa(FPOS *st) {
       prec min_y = net->min_y;
       prec max_x = net->max_x;
       prec max_y = net->max_y;
-
+      // cout<<"distance rate = "<<(max_x-min_x)/ wlen_cof.x<<endl;
+      // cout<<"distance rate = "<<(max_y-min_y)/ wlen_cof.y<<endl;
+      net_tot_overIter +=2;
+      if((max_x-min_x)/ wlen_cof.x > 20)
+      {
+        net_fit_overIter++;
+      }
+      if((max_y-min_y)/ wlen_cof.y > 20)
+      {
+        net_fit_overIter++;
+      }
       FPOS sum_num1, sum_num2;
       FPOS sum_denom1, sum_denom2;
 
@@ -1898,7 +1911,19 @@ void net_update_wa_fast(FPOS *st) {
       prec min_y = net->min_y;
       prec max_x = net->max_x;
       prec max_y = net->max_y;
-
+      if(net->pinCNTinObject>2)
+      {
+        net_tot_overIter +=2.0;
+      if((max_x-min_x)/ wlen_cof.x > 30)
+      {
+        net_fit_overIter+=1.0;
+      }
+      if((max_y-min_y)/ wlen_cof.y > 30)
+      {
+        net_fit_overIter+=1.0;
+      }
+      }
+      
       FPOS sum_num1, sum_num2;
       FPOS sum_denom1, sum_denom2;
 

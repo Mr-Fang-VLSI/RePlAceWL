@@ -81,6 +81,8 @@ extern prec netupdate_runtime_pinnet;
 extern prec grad_tot_diff;
 extern prec grad_out_diff;
 extern prec tot_grad;
+extern prec net_tot_overIter ;
+extern prec net_fit_overIter ;
 struct EXP_ST {
   prec x;
   prec val;

@@ -948,6 +948,7 @@ void myNesterov::SummarizeNesterovOpt(int last_index) {
   cout<<"grad out diff:="<<grad_out_diff<<endl;
   cout<<"grad tot:="<<tot_grad<<endl;
   cout<<"grad tot diff rate:="<<grad_tot_diff/tot_grad<<endl;
+  cout<<"fit net rate = "<<net_fit_overIter/net_tot_overIter<<endl;
   if(STAGE == mGP2D) {
     mGP2D_iterCNT = last_index + 1;
     hpwl_mGP2D = it->tot_hpwl;

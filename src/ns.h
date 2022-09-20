@@ -51,6 +51,8 @@ extern prec netupdate_runtime_pinnet;
 extern prec grad_tot_diff;
 extern prec grad_out_diff;
 extern prec tot_grad;
+extern prec net_tot_overIter ;
+extern prec net_fit_overIter ;
 class myNesterov {
  private:
   struct FPOS *x_st;
@@ -111,7 +113,7 @@ class myNesterov {
   std::vector<pair<int, bool> > timingChkArr;
   bool isTimingIter(int ovlp);
 
-  int fastWL_ctrl_num = 11;
+  int fastWL_ctrl_num = 3;
   prec net_update_runtime = 0;
   prec bin_update_runtime = 0;
   prec grad_update_runtime = 0;
