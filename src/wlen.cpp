@@ -45,6 +45,7 @@
 #include <iomanip>
 #include <omp.h>
 #include <iostream>
+#include <ostream>
 #include <stdexcept>
 #include <unordered_map>
 #include <fstream>
@@ -829,26 +830,112 @@ void get_net_wlen_grad_wa(FPOS obj, NET *net, PIN *pin, FPOS *grad) {
 }
 
 void net_update_init(void) {
-  for(int i = 0; i < netCNT; i++) {
-    NET *net = &netInstance[i];
+  if(!fastWL) {
+    for(int i = 0; i < netCNT; i++) {
+      NET *net = &netInstance[i];
 
-    net->terminalMin.Set(place.end);
-    net->terminalMax.Set(place.org);
+      net->terminalMin.Set(place.end);
+      net->terminalMax.Set(place.org);
 
-    bool first_term = true;
+      bool first_term = true;
 
-    for(int j = 0; j < net->pinCNTinObject; j++) {
-      PIN *pin = net->pin[j];
-      if(pin->term) {
-        if(first_term) {
-          first_term = false;
+      for(int j = 0; j < net->pinCNTinObject; j++) {
+        PIN *pin = net->pin[j];
+        if(pin->term) {
+          if(first_term) {
+            first_term = false;
 
-          net->terminalMin.Set(pin->fp);
-          net->terminalMax.Set(pin->fp);
+            net->terminalMin.Set(pin->fp);
+            net->terminalMax.Set(pin->fp);
+          }
+          else {
+            net->terminalMin.Min(pin->fp);
+            net->terminalMax.Max(pin->fp);
+          }
         }
-        else {
-          net->terminalMin.Min(pin->fp);
-          net->terminalMax.Max(pin->fp);
+      }
+    }
+  }
+  else {
+    for(int i = 0; i < netCNT; i++) {
+      NET *net = &netInstance[i];
+      if(net->pinCNTinObject > 2) {
+        net->terminalMin.Set(place.end);
+        net->terminalMax.Set(place.org);
+        net->terminal2ndMin.Set(place.end);
+        net->terminal2ndMax.Set(place.org);
+        bool first_term = true;
+
+        for(int j = 0; j < net->pinCNTinObject; j++) {
+          PIN *pin = net->pin[j];
+          if(pin->term) {
+            if(first_term) {
+              first_term = false;
+
+              net->terminalMin.Set(pin->fp);
+              net->terminalMax.Set(pin->fp);
+            }
+            else {
+              // net->terminalMin.Min(pin->fp);
+              // net->terminalMax.Max(pin->fp);
+              // compare to max and min
+              if(pin->fp.x > net->terminalMax.x) {
+                net->terminal2ndMax.x = net->terminalMax.x;
+                net->terminalMax.x = pin->fp.x;
+              }
+              else if(pin->fp.x > net->terminal2ndMax.x) {
+                net->terminal2ndMax.x = pin->fp.x;
+              }
+              if(pin->fp.y > net->terminalMax.y) {
+                net->terminal2ndMax.y = net->terminalMax.y;
+                net->terminalMax.y = pin->fp.y;
+              }
+              else if(pin->fp.y > net->terminal2ndMax.y) {
+                net->terminal2ndMax.y = pin->fp.y;
+              }
+
+              // for min
+              if(pin->fp.x < net->terminalMin.x) {
+                net->terminal2ndMin.x = net->terminalMin.x;
+                net->terminalMin.x = pin->fp.x;
+              }
+              else if(pin->fp.x < net->terminal2ndMin.x) {
+                net->terminal2ndMin.x = pin->fp.x;
+              }
+              if(pin->fp.y < net->terminalMin.y) {
+                net->terminal2ndMin.y = net->terminalMin.y;
+                net->terminalMin.y = pin->fp.y;
+              }
+              else if(pin->fp.y < net->terminal2ndMin.y) {
+                net->terminal2ndMin.y = pin->fp.y;
+              }
+            }
+          }
+        }
+        // cout<<"2nd max terminal:"<<net->terminal2ndMax.x<<",
+        // "<<net->terminal2ndMax.y<<endl; cout<<"2nd min
+        // terminal:"<<net->terminal2ndMin.x<<", "<<net->terminal2ndMin.y<<endl;
+      }
+      else {
+        net->terminalMin.Set(place.end);
+        net->terminalMax.Set(place.org);
+
+        bool first_term = true;
+
+        for(int j = 0; j < net->pinCNTinObject; j++) {
+          PIN *pin = net->pin[j];
+          if(pin->term) {
+            if(first_term) {
+              first_term = false;
+
+              net->terminalMin.Set(pin->fp);
+              net->terminalMax.Set(pin->fp);
+            }
+            else {
+              net->terminalMin.Min(pin->fp);
+              net->terminalMax.Max(pin->fp);
+            }
+          }
         }
       }
     }
@@ -1023,7 +1110,6 @@ void fastWL_update() {
     // linearFunc.push_back(zerofp);
     // cout<<ctrl_pts.at(i).x<<endl;
     // cout<<ctrl_pts.at(i).y<<endl;
-
   }
   linearFunc_update();
 }
@@ -1611,7 +1697,14 @@ void net_update_wa_fast(FPOS *st) {
 
     //        FPOS fp, pof, center;
     //        FPOS sum_num1, sum_num2, sum_denom1, sum_denom2;
-
+    FPOS MinAdmitLength;
+    MinAdmitLength.x = 30 * wlen_cof_inv.x;
+    MinAdmitLength.y = 30 * wlen_cof_inv.y;
+    FPOS AdmitInterval;
+    AdmitInterval.x = MinAdmitLength.x*0.05;
+    AdmitInterval.y = MinAdmitLength.y*0.05;
+    cout<<"MinAdmitLength = "<<MinAdmitLength.x<<", "<<MinAdmitLength.y<<endl;
+    cout<<"AdmitInterval = "<<AdmitInterval.x<<", "<<AdmitInterval.y<<endl;
 #pragma omp for
     for(i = 0; i < netCNT; i++) {
       NET *net = &netInstance[i];
@@ -1620,32 +1713,119 @@ void net_update_wa_fast(FPOS *st) {
       net->min_y = net->terminalMin.y;
       net->max_x = net->terminalMax.x;
       net->max_y = net->terminalMax.y;
+      if(net->pinCNTinObject == 2) {
+        for(int j = 0; j < net->pinCNTinObject; j++) {
+          PIN *pin = net->pin[j];
+
+          //            cout << j << " " << pin << endl;
+
+          if(!pin->term) {
+            MODULE *curModule = &moduleInstance[pin->moduleID];
+            FPOS pof = curModule->pof[pin->pinIDinModule];
+            FPOS center = st[pin->moduleID];
+            FPOS fp;
+            fp.x = center.x + pof.x;
+            fp.y = center.y + pof.y;
+            pin->fp = fp;
+
+            net->min_x = min(net->min_x, fp.x);
+            net->min_y = min(net->min_y, fp.y);
+            net->max_x = max(net->max_x, fp.x);
+            net->max_y = max(net->max_y, fp.y);
+          }
+          else {
+            continue;
+          }
+        }
+      }
+      else {
+        net->min2nd_x = net->terminal2ndMin.x;
+        net->min2nd_y = net->terminal2ndMin.y;
+        net->max2nd_x = net->terminal2ndMax.x;
+        net->max2nd_y = net->terminal2ndMax.y;
+
+        for(int j = 0; j < net->pinCNTinObject; j++) {
+          PIN *pin = net->pin[j];
+
+          //            cout << j << " " << pin << endl;
+
+          if(!pin->term) {
+            MODULE *curModule = &moduleInstance[pin->moduleID];
+            FPOS pof = curModule->pof[pin->pinIDinModule];
+            FPOS center = st[pin->moduleID];
+            FPOS fp;
+            fp.x = center.x + pof.x;
+            fp.y = center.y + pof.y;
+            pin->fp = fp;
+
+            if(fp.x > net->max_x)
+            {
+              net->max2nd_x = net->max_x;
+              net->max_x = fp.x;
+            }
+            else if(fp.x > net->max2nd_x)
+            {
+              net->max2nd_x = fp.x;
+            }
+            if(fp.y > net->max_y)
+            {
+              net->max2nd_y = net->max_y;
+              net->max_y = fp.y;
+            }
+            else if(fp.y > net->max2nd_y)
+            {
+              net->max2nd_y = fp.y;
+            }
+            //for min
+            if(fp.x < net->min_x)
+            {
+              net->min2nd_x = net->min_x;
+              net->min_x = fp.x;
+            }
+            else if(fp.x < net->min2nd_x)
+            {
+              net->min2nd_x = fp.x;
+            }
+            if(fp.y < net->min_y)
+            {
+              net->min2nd_y = net->min_y;
+              net->min_y = fp.y;
+            }
+            else if(fp.y < net->min2nd_y)
+            {
+              net->min2nd_y = fp.y;
+            }
+          }
+          else {
+            continue;
+          }
+        }
+        // cout<<"net  min ="<<net->min_x<<", "<<net->min_y<<endl;
+        // cout<<"net  max ="<<net->max_x<<", "<<net->max_y<<endl;
+        // cout<<"net 2nd min ="<<net->min2nd_x<<", "<<net->min2nd_y<<endl;
+        // cout<<"net 2nd max ="<<net->max2nd_x<<", "<<net->max2nd_y<<endl;
+        if((net->max_x - net->min_x)>MinAdmitLength.x&&(net->min2nd_x-net->min_x)>AdmitInterval.x&&(net->max_x>net->max2nd_x)>AdmitInterval.x)
+        {
+          net->simple_multinet.x = 1;
+          cout<<"find simple net x"<<endl;
+        }
+        else{
+          net->simple_multinet.x = 0;
+        }
+
+        if((net->max_y - net->min_y)>MinAdmitLength.y&&(net->min2nd_y-net->min_y)>AdmitInterval.y&&(net->max_y>net->max2nd_y)>AdmitInterval.y)
+        {
+          net->simple_multinet.y = 1;
+          cout<<"find simple net y"<<endl;
+        }
+        else{
+          net->simple_multinet.y = 0;
+        }
+      }
 
       //        cout << "size: " << sizeof(PIN) << endl;
       //        cout << net->pinCNTinObject << endl;
-      for(int j = 0; j < net->pinCNTinObject; j++) {
-        PIN *pin = net->pin[j];
 
-        //            cout << j << " " << pin << endl;
-
-        if(!pin->term) {
-          MODULE *curModule = &moduleInstance[pin->moduleID];
-          FPOS pof = curModule->pof[pin->pinIDinModule];
-          FPOS center = st[pin->moduleID];
-          FPOS fp;
-          fp.x = center.x + pof.x;
-          fp.y = center.y + pof.y;
-          pin->fp = fp;
-
-          net->min_x = min(net->min_x, fp.x);
-          net->min_y = min(net->min_y, fp.y);
-          net->max_x = max(net->max_x, fp.x);
-          net->max_y = max(net->max_y, fp.y);
-        }
-        else {
-          continue;
-        }
-      }
       //        if( i >=2 )
       //        exit(1);
 

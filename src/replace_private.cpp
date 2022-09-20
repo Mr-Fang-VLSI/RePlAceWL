@@ -357,7 +357,8 @@ const char* NET::Name() {
 }
 
 NET::NET() : min_x(PREC_MAX), min_y(PREC_MAX), 
-  max_x(PREC_MIN), max_y(PREC_MIN),
+  max_x(PREC_MIN), max_y(PREC_MIN),min2nd_x(PREC_MAX), min2nd_y(PREC_MAX), 
+  max2nd_x(PREC_MIN), max2nd_y(PREC_MIN),
   pin(0), pin2(0), hpwl_x(PREC_MIN), hpwl_y(PREC_MIN),  
   outPinIdx(INT_MAX), pinCNTinObject(INT_MAX), pinCNTinObject2(INT_MAX),
   pinCNTinObject_tier(INT_MAX), idx(INT_MAX), mod_idx(INT_MAX), 
@@ -370,6 +371,8 @@ NET::NET() : min_x(PREC_MAX), min_y(PREC_MAX),
     sum_denom2.SetZero();
     terminalMin.SetZero();
     terminalMax.SetZero();
+    terminal2ndMin.SetZero();
+    terminal2ndMax.SetZero();
   }
 
 ROW::ROW() : site_wid(0),

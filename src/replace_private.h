@@ -393,6 +393,10 @@ struct NET {
   prec min_y;
   prec max_x;
   prec max_y;
+  prec min2nd_x;
+  prec min2nd_y;
+  prec max2nd_x;
+  prec max2nd_y;
   FPOS sum_num1;
   FPOS sum_num2;
   FPOS sum_denom1;
@@ -401,7 +405,10 @@ struct NET {
   PIN **pin2; // will store original pin info. used for bookshelf writing.
   FPOS terminalMin;
   FPOS terminalMax;
-
+  //to update second min and max terminal;
+  FPOS terminal2ndMin;
+  FPOS terminal2ndMax;
+  POS simple_multinet;//0: no, 1:simple
   prec hpwl_x;
   prec hpwl_y;
   prec hpwl;
