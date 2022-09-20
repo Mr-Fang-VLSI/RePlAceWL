@@ -1729,7 +1729,8 @@ void net_update_wa(FPOS *st) {
       prec max_y = net->max_y;
       // cout<<"distance rate = "<<(max_x-min_x)/ wlen_cof.x<<endl;
       // cout<<"distance rate = "<<(max_y-min_y)/ wlen_cof.y<<endl;
-      net_tot_overIter +=2;
+      if(net->pinCNTinObject>2){
+        net_tot_overIter +=2;
       if((max_x-min_x)/ wlen_cof.x > 20)
       {
         net_fit_overIter++;
@@ -1738,6 +1739,8 @@ void net_update_wa(FPOS *st) {
       {
         net_fit_overIter++;
       }
+      }
+      
       FPOS sum_num1, sum_num2;
       FPOS sum_denom1, sum_denom2;
 
