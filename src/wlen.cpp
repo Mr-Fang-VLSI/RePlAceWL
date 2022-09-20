@@ -1804,6 +1804,10 @@ void net_update_wa_fast(FPOS *st) {
         // cout<<"net  max ="<<net->max_x<<", "<<net->max_y<<endl;
         // cout<<"net 2nd min ="<<net->min2nd_x<<", "<<net->min2nd_y<<endl;
         // cout<<"net 2nd max ="<<net->max2nd_x<<", "<<net->max2nd_y<<endl;
+        if((net->max_x - net->min_x)>MinAdmitLength.x)
+        {
+          cout<<"find long net x" <<endl;
+        }
         if((net->max_x - net->min_x)>MinAdmitLength.x&&(net->min2nd_x-net->min_x)>AdmitInterval.x&&(net->max_x>net->max2nd_x)>AdmitInterval.x)
         {
           net->simple_multinet.x = 1;
