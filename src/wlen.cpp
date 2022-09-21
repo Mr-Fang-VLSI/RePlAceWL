@@ -473,6 +473,9 @@ void wlen_grad_wa(int cell_idx, FPOS *grad) {
       // cout << "GetCost Grad: " << time << endl;
       time_start(&time);
     }
+    
+    
+    get_net_wlen_grad_wa(pin->fp, net, pin, &net_grad);
     if(timeon && net->pinCNTinObject == 2) {
       time_end(&time);
       // cout << "GetCost Grad: " << time << endl;
@@ -481,8 +484,14 @@ void wlen_grad_wa(int cell_idx, FPOS *grad) {
       runtime_2pinnet += time;
       time_start(&time);
     }
-    get_net_wlen_grad_wa(pin->fp, net, pin, &net_grad);
-
+    if(timeon && net->pinCNTinObject == 3) {
+      time_end(&time);
+      // cout << "GetCost Grad: " << time << endl;
+      // grad_update_runtime += time;
+      // lc_update_runtime += time;
+      runtime_3pinnet += time;
+      time_start(&time);
+    }
     float curTimingWeight = netInstance[pin->netID].timingWeight;
     // Timing Control Parts
     // curTimingWeight = netWeightBase + min(max(0.0f, netWeightBound -
@@ -779,6 +788,283 @@ void get_net_wlen_grad_wa(FPOS obj, NET *net, PIN *pin, FPOS *grad) {
 
     // cout<<"fast gradient debug 1"<<endl;
   }
+  else if(fastWL && net->pinCNTinObject == 3) {
+    prec min_x = net->min_x;
+    prec max_x = net->max_x;
+    prec min_y = net->min_y;
+    prec max_y = net->max_y;
+    FPOS dist;
+    dist.x = max_x - min_x;
+    dist.y = max_y - min_y;
+
+    if(dist.x < FASTWL_HALF.x) {
+      int i = (int)((dist.x + FASTWL_HALF.x) * FASTWL_INTERVAL.x);
+      // cout<<"3 pin i = "<<i<<endl;
+      // cout<<"3 pin debug 0"<<endl;
+      prec mid;
+      for(int i = 0; i < net->pinCNTinObject; i++) {
+        if(net->pin[i]->fp.x < max_x && net->pin[i]->fp.x > min_x) {
+          mid = net->pin[i]->fp.x;
+          break;
+        }
+      }
+      mid = mid - min_x;
+      // cout<<"3 pin debug 0"<<endl;
+      if(pin->fp.x == max_x) {
+        // cout<<"3 pin debug 1"<<endl;
+        grad->x = (-linearFuncX_3pin[i].second.y * mid +
+                     linearFuncX_3pin[i].first.x);
+        // if(i < ctrl_pt_num - 2) {
+        //   prec ratio = 1;
+        //   // prec ratio = 1 - (dist.x - ctrl_pts[i].x) * FASTWL_INTERVAL.x;
+        //   grad->x = (-linearFuncX_3pin[i].second.y * mid +
+        //              linearFuncX_3pin[i].first.x) *
+        //             (ratio);
+        //   grad->x += (-linearFuncX_3pin[i + 1].second.y * mid +
+        //               linearFuncX_3pin[i + 1].first.x) *
+        //              (1 - ratio);
+        // }
+        // else {
+        //   grad->x = (-linearFuncX_3pin[i].second.y * mid +
+        //              linearFuncX_3pin[i].first.x);
+        // }
+      }
+      else if(pin->fp.x == min_x) {
+        // cout<<"3 pin debug 2"<<endl;
+        grad->x = -(linearFuncX_3pin[i].second.y * mid +
+                      linearFuncX_3pin[i].first.y);
+        // if(i < ctrl_pt_num - 2) {
+        //   prec ratio = 1;
+        //   // prec ratio = 1 - (dist.x - ctrl_pts[i].x) * FASTWL_INTERVAL.x;
+        //   grad->x = -(linearFuncX_3pin[i].second.y * mid +
+        //               linearFuncX_3pin[i].first.y) *
+        //             (ratio);
+        //   grad->x += -(linearFuncX_3pin[i + 1].second.y * mid +
+        //                linearFuncX_3pin[i + 1].first.y) *
+        //              (1 - ratio);
+        // }
+        // else {
+        //   grad->x = -(linearFuncX_3pin[i].second.y * mid +
+        //               linearFuncX_3pin[i].first.y);
+        // }
+      }
+      else {
+        // cout<<"3 pin debug 3"<<endl;
+        grad->x = (linearFuncX_3pin[i].second.x * mid -
+                      linearFuncX_3pin[i].first.y);
+        // if(i < ctrl_pt_num - 2) {
+        //   prec ratio = 1;
+        //   // prec ratio = 1 - (dist.x - ctrl_pts[i].x) * FASTWL_INTERVAL.x;
+        //   grad->x = (linearFuncX_3pin[i].second.x * mid -
+        //               linearFuncX_3pin[i].first.y) *
+        //             (ratio);
+        //   grad->x += (linearFuncX_3pin[i + 1].second.x * mid -
+        //                linearFuncX_3pin[i + 1].first.y) *
+        //              (1 - ratio);
+        // }
+        // else {
+        //   grad->x = (linearFuncX_3pin[i].second.x * mid -
+        //               linearFuncX_3pin[i].first.y);
+        // }
+      }
+    }
+
+    else {
+      // cout<<"3 pin debug 4"<<endl;
+      FPOS grad_sum_num1, grad_sum_num2;
+      FPOS grad_sum_denom1, grad_sum_denom2;
+      FPOS grad1;
+      FPOS grad2;
+      FPOS e1 = pin->e1;
+      FPOS e2 = pin->e2;
+      POS flg1 = pin->flg1;
+      POS flg2 = pin->flg2;
+      FPOS sum_num1 = net->sum_num1;
+      FPOS sum_num2 = net->sum_num2;
+      FPOS sum_denom1 = net->sum_denom1;
+      FPOS sum_denom2 = net->sum_denom2;
+      if(flg1.x) {
+        grad_sum_denom1.x = wlen_cof.x * e1.x;
+        grad_sum_num1.x = e1.x + obj.x * grad_sum_denom1.x;
+        grad1.x =
+            (grad_sum_num1.x * sum_denom1.x - grad_sum_denom1.x * sum_num1.x) /
+            (sum_denom1.x * sum_denom1.x);
+      }
+
+      
+
+      if(flg2.x) {
+        grad_sum_denom2.x = wlen_cof.x * e2.x;
+        grad_sum_num2.x = e2.x - obj.x * grad_sum_denom2.x;
+        grad2.x =
+            (grad_sum_num2.x * sum_denom2.x + grad_sum_denom2.x * sum_num2.x) /
+            (sum_denom2.x * sum_denom2.x);
+      }
+
+      
+
+      grad->x = grad1.x - grad2.x;
+    }
+
+    if(dist.y < FASTWL_HALF.y) {
+      // cout<<"3 pin debug 5"<<endl;
+      int i = (int)((dist.y + FASTWL_HALF.y) * FASTWL_INTERVAL.y);
+      // cout<<"3 pin i = "<<i<<endl;
+      prec mid;
+      for(int i = 0; i < net->pinCNTinObject; i++) {
+        if(net->pin[i]->fp.y < max_y && net->pin[i]->fp.y > min_y) {
+          mid = net->pin[i]->fp.y;
+          break;
+        }
+      }
+      mid = mid - min_y;
+      // cout<<"3 pin debug 6"<<endl;
+      // cout<<"mid = "<<mid;
+      if(pin->fp.y == max_y) {
+        // cout<<"3 pin debug 6.1"<<endl;
+        grad->y = (-linearFuncY_3pin[i].second.y * mid +
+                     linearFuncY_3pin[i].first.x);
+        // if(i < ctrl_pt_num - 2) {
+        //   // cout<<"3 pin debug 6.2"<<endl;
+        //   prec ratio = 1;
+        //   // prec ratio = 1 - (dist.x - ctrl_pts[i].y) * FASTWL_INTERVAL.y;
+        //   // cout<<"3 pin debug 6.21"<<endl;
+        //   grad->y = (-linearFuncY_3pin[i].second.y * mid +
+        //              linearFuncY_3pin[i].first.x) *
+        //             (ratio);
+        //   // cout<<"3 pin debug 6.22"<<endl;
+        //   grad->y += (-linearFuncY_3pin[i + 1].second.y * mid +
+        //               linearFuncY_3pin[i + 1].first.x) *
+        //              (1 - ratio);
+        //   // cout<<"3 pin debug 6.23"<<endl;
+        //   // cout<<"grad y = "<<grad->y<<endl;;
+        // }
+        // else {
+        //   // cout<<"3 pin debug 6.3"<<endl;
+        //   grad->y = (-linearFuncY_3pin[i].second.y * mid +
+        //              linearFuncY_3pin[i].first.x);
+        // }
+      }
+      
+      else if(pin->fp.y == min_y) {
+        // cout<<"3 pin debug 7"<<endl;
+        grad->y = -(linearFuncY_3pin[i].second.y * mid +
+                      linearFuncY_3pin[i].first.y);
+        // if(i < ctrl_pt_num - 2) {
+        //   prec ratio = 1;
+        //   // prec ratio = 1 - (dist.x - ctrl_pts[i].y) * FASTWL_INTERVAL.y;
+        //   grad->y = -(linearFuncY_3pin[i].second.y * mid +
+        //               linearFuncY_3pin[i].first.y) *
+        //             (ratio);
+        //   grad->y += -(linearFuncY_3pin[i + 1].second.y * mid +
+        //                linearFuncY_3pin[i + 1].first.y) *
+        //              (1 - ratio);
+        // }
+        // else {
+        //   grad->y = -(linearFuncY_3pin[i].second.y * mid +
+        //               linearFuncY_3pin[i].first.y);
+        // }
+      }
+      else {
+        // cout<<"3 pin debug 8"<<endl;
+        grad->y = (linearFuncY_3pin[i].second.x * mid -
+                      linearFuncY_3pin[i].first.y);
+        // if(i < ctrl_pt_num - 2) {
+        //   prec ratio = 1;
+        //   // prec ratio = 1 - (dist.x - ctrl_pts[i].y) * FASTWL_INTERVAL.y;
+        //   grad->y = (linearFuncY_3pin[i].second.x * mid -
+        //               linearFuncY_3pin[i].first.y) *
+        //             (ratio);
+        //   grad->y += (linearFuncY_3pin[i + 1].second.x * mid -
+        //                linearFuncY_3pin[i + 1].first.y) *
+        //              (1 - ratio);
+        // }
+        // else {
+        //   grad->y = (linearFuncY_3pin[i].second.x * mid -
+        //               linearFuncY_3pin[i].first.y);
+        // }
+      }
+    //   if(1)
+    // {
+    //   FPOS grad_ref;
+    //   FPOS grad_sum_num1, grad_sum_num2;
+    // FPOS grad_sum_denom1, grad_sum_denom2;
+    // FPOS grad1;
+    // FPOS grad2;
+    // FPOS e1 = pin->e1;
+    // FPOS e2 = pin->e2;
+    // POS flg1 = pin->flg1;
+    // POS flg2 = pin->flg2;
+    // FPOS sum_num1 = net->sum_num1;
+    // FPOS sum_num2 = net->sum_num2;
+    // FPOS sum_denom1 = net->sum_denom1;
+    // FPOS sum_denom2 = net->sum_denom2;
+    
+
+    // if(flg1.y) {
+    //   grad_sum_denom1.y = wlen_cof.y * e1.y;
+    //   grad_sum_num1.y = e1.y + obj.y * grad_sum_denom1.y;
+    //   grad1.y =
+    //       (grad_sum_num1.y * sum_denom1.y - grad_sum_denom1.y * sum_num1.y) /
+    //       (sum_denom1.y * sum_denom1.y);
+    // }
+
+    
+
+    // if(flg2.y) {
+    //   grad_sum_denom2.y = wlen_cof.y * e2.y;
+    //   grad_sum_num2.y = e2.y - obj.y * grad_sum_denom2.y;
+    //   grad2.y =
+    //       (grad_sum_num2.y * sum_denom2.y + grad_sum_denom2.y * sum_num2.y) /
+    //       (sum_denom2.y * sum_denom2.y);
+    // }
+
+    
+    // grad_ref.y = grad1.y - grad2.y;
+    // cout<<"diff = "<<(grad_ref.y - grad->y)/(grad_ref.y+0.001)<<endl;
+    // cout<<"ref grad = "<<grad_ref.y<<", grad = "<<grad->y<<endl;
+    // }
+    }
+    else {
+      // cout<<"3 pin debug 9"<<endl;
+    FPOS grad_sum_num1, grad_sum_num2;
+    FPOS grad_sum_denom1, grad_sum_denom2;
+    FPOS grad1;
+    FPOS grad2;
+    FPOS e1 = pin->e1;
+    FPOS e2 = pin->e2;
+    POS flg1 = pin->flg1;
+    POS flg2 = pin->flg2;
+    FPOS sum_num1 = net->sum_num1;
+    FPOS sum_num2 = net->sum_num2;
+    FPOS sum_denom1 = net->sum_denom1;
+    FPOS sum_denom2 = net->sum_denom2;
+    
+
+    if(flg1.y) {
+      grad_sum_denom1.y = wlen_cof.y * e1.y;
+      grad_sum_num1.y = e1.y + obj.y * grad_sum_denom1.y;
+      grad1.y =
+          (grad_sum_num1.y * sum_denom1.y - grad_sum_denom1.y * sum_num1.y) /
+          (sum_denom1.y * sum_denom1.y);
+    }
+
+    
+
+    if(flg2.y) {
+      grad_sum_denom2.y = wlen_cof.y * e2.y;
+      grad_sum_num2.y = e2.y - obj.y * grad_sum_denom2.y;
+      grad2.y =
+          (grad_sum_num2.y * sum_denom2.y + grad_sum_denom2.y * sum_num2.y) /
+          (sum_denom2.y * sum_denom2.y);
+    }
+
+    
+    grad->y = grad1.y - grad2.y;
+
+    }
+    
+  }
   else {
     FPOS grad_sum_num1, grad_sum_num2;
     FPOS grad_sum_denom1, grad_sum_denom2;
@@ -1022,9 +1308,192 @@ void fastWL_init(int controlNum)  // controlNum must be odd
 
     // cout<<"linear Func updated"<<endl;
   }
+  fastWL_init_3pin(controlNum);
   linearFunc_update();
 }
+void fastWL_init_3pin(int controlNum) {
+  FPOS zerofp;
+  pair< FPOS, FPOS > zeroPair;
+  zeroPair.first = zerofp;
+  zeroPair.second = zerofp;
+  zerofp.SetZero();
+  ctrl_pt_grad_3pin.clear();
+  ctrl_pt_grad_3pin.push_back(zerofp);
 
+  for(int i = 1; i < controlNum; i++) {
+    ctrl_pt_grad_3pin.push_back(zerofp);
+    linearFuncX_3pin.push_back(zeroPair);
+    linearFuncY_3pin.push_back(zeroPair);
+  }
+  for(int i = 0; i < controlNum; i++) {
+    if(i != (ctrl_pt_num - 1) / 2) {
+      cal_3pin_WA_grads(ctrl_pts[i], ctrl_pt_grad_3pin[i]);
+    }
+    else {
+      ctrl_pt_grad_3pin[i].SetZero();
+    }
+    cout << "3 pin grad at " << ctrl_pts[i].x << " = " << ctrl_pt_grad_3pin[i].x
+         << " " << ctrl_pt_grad_3pin[i].y << endl;
+  }
+  linearFunc_update_3pin();
+}
+void cal_3pin_WA_grads(FPOS dist, FPOS &grad) {
+  prec max_x = dist.x > 0.0 ? dist.x : 0.0;
+  prec min_x = dist.x < 0.0 ? dist.x : 0.0;
+  prec max_y = dist.y > 0.0 ? dist.y : 0.0;
+  prec min_y = dist.y < 0.0 ? dist.y : 0.0;
+  PIN pin1, pin2, pin3;
+  FPOS sum_num1, sum_denom1, sum_num2, sum_denom2;
+  sum_num1.SetZero();
+  sum_num2.SetZero();
+  sum_denom1.SetZero();
+  sum_denom2.SetZero();
+
+  for(int j = 0; j < 3; j++) {
+    // PIN *pin = net->pin[j];
+    FPOS fp;
+    PIN *pin;
+
+    if(j == 0) {
+      pin = &pin1;
+    }
+    else if(j == 1) {
+      pin = &pin2;
+    }
+    else {
+      pin = &pin3;
+    }
+    if(j < 2) {
+      fp.SetZero();
+    }
+    else {
+      fp.Set(dist);
+      cout << "cal 3pin fp :=" << fp.x << " " << fp.y << endl;
+    }
+    prec exp_max_x = (fp.x - max_x) * wlen_cof.x;
+    prec exp_min_x = (min_x - fp.x) * wlen_cof.x;
+    prec exp_max_y = (fp.y - max_y) * wlen_cof.y;
+    prec exp_min_y = (min_y - fp.y) * wlen_cof.y;
+
+    if(exp_max_x > NEG_MAX_EXP) {
+      pin->e1.x = get_exp(exp_max_x);
+      sum_num1.x += fp.x * pin->e1.x;
+      sum_denom1.x += pin->e1.x;
+      pin->flg1.x = 1;
+    }
+    else {
+      pin->flg1.x = 0;
+    }
+
+    if(exp_min_x > NEG_MAX_EXP) {
+      pin->e2.x = get_exp(exp_min_x);
+      sum_num2.x += fp.x * pin->e2.x;
+      sum_denom2.x += pin->e2.x;
+      pin->flg2.x = 1;
+    }
+    else {
+      pin->flg2.x = 0;
+    }
+
+    if(exp_max_y > NEG_MAX_EXP) {
+      pin->e1.y = get_exp(exp_max_y);
+      sum_num1.y += fp.y * pin->e1.y;
+      sum_denom1.y += pin->e1.y;
+      pin->flg1.y = 1;
+    }
+    else {
+      pin->flg1.y = 0;
+    }
+
+    if(exp_min_y > NEG_MAX_EXP) {
+      pin->e2.y = get_exp(exp_min_y);
+      sum_num2.y += fp.y * pin->e2.y;
+      sum_denom2.y += pin->e2.y;
+      pin->flg2.y = 1;
+    }
+    else {
+      pin->flg2.y = 0;
+    }
+  }
+
+  FPOS grad_sum_num1, grad_sum_num2;
+  FPOS grad_sum_denom1, grad_sum_denom2;
+  FPOS grad1;
+  FPOS grad2;
+  FPOS e1 = pin3.e1;
+  FPOS e2 = pin3.e2;
+  POS flg1 = pin3.flg1;
+  POS flg2 = pin3.flg2;
+
+  if(flg1.x) {
+    grad_sum_denom1.x = wlen_cof.x * e1.x;
+    grad_sum_num1.x = e1.x + dist.x * grad_sum_denom1.x;
+    grad1.x =
+        (grad_sum_num1.x * sum_denom1.x - grad_sum_denom1.x * sum_num1.x) /
+        (sum_denom1.x * sum_denom1.x);
+  }
+
+  if(flg1.y) {
+    grad_sum_denom1.y = wlen_cof.y * e1.y;
+    grad_sum_num1.y = e1.y + dist.y * grad_sum_denom1.y;
+    grad1.y =
+        (grad_sum_num1.y * sum_denom1.y - grad_sum_denom1.y * sum_num1.y) /
+        (sum_denom1.y * sum_denom1.y);
+  }
+
+  if(flg2.x) {
+    grad_sum_denom2.x = wlen_cof.x * e2.x;
+    grad_sum_num2.x = e2.x - dist.x * grad_sum_denom2.x;
+    grad2.x =
+        (grad_sum_num2.x * sum_denom2.x + grad_sum_denom2.x * sum_num2.x) /
+        (sum_denom2.x * sum_denom2.x);
+  }
+
+  if(flg2.y) {
+    grad_sum_denom2.y = wlen_cof.y * e2.y;
+    grad_sum_num2.y = e2.y - dist.y * grad_sum_denom2.y;
+    grad2.y =
+        (grad_sum_num2.y * sum_denom2.y + grad_sum_denom2.y * sum_num2.y) /
+        (sum_denom2.y * sum_denom2.y);
+  }
+
+  grad.x = grad1.x - grad2.x;
+  grad.y = grad1.y - grad2.y;
+}
+
+void linearFunc_update_3pin() {
+  for(int i = 0; i < ctrl_pt_num - 1; i++) {
+    //截距
+    if(i != (ctrl_pt_num - 1) / 2)
+    {
+      linearFuncX_3pin[i].first.x = ctrl_pt_grad_3pin[i + 1].x;
+      linearFuncX_3pin[i].first.y = ctrl_pt_grad_3pin[i + 1].x * 0.5;
+
+      linearFuncY_3pin[i].first.x = ctrl_pt_grad_3pin[i + 1].y;
+      linearFuncY_3pin[i].first.y = ctrl_pt_grad_3pin[i + 1].y * 0.5;
+    //斜率
+      linearFuncX_3pin[i].second.x = ctrl_pt_grad_3pin[i + 1].x / ctrl_pts[i].x;
+      linearFuncX_3pin[i].second.y = linearFuncX_3pin[i].second.x * 0.5;
+
+      linearFuncY_3pin[i].second.x = ctrl_pt_grad_3pin[i + 1].y / ctrl_pts[i].y;
+      linearFuncY_3pin[i].second.y = linearFuncY_3pin[i].second.x * 0.5;
+    }
+    else{
+      linearFuncX_3pin[i].first.x = 0.0;
+      linearFuncX_3pin[i].first.y = 0.0;
+
+      linearFuncY_3pin[i].first.x = 0.0;
+      linearFuncY_3pin[i].first.y = 0.0;
+    //斜率
+      linearFuncX_3pin[i].second.x = 0.0;
+      linearFuncX_3pin[i].second.y = 0.0;
+
+      linearFuncY_3pin[i].second.x = 0.0;
+      linearFuncY_3pin[i].second.y = 0.0;
+    }
+    
+  }
+}
 void fastWL_update() {
   // update ctgrl_pt_grad with new wcof
   //  cout<<"fastwl_update debug 0"<<endl;
@@ -1095,7 +1564,7 @@ void fastWL_update() {
   // std::cout<<"fastwl_init debug 0.2 "<< ctrl_pts.at(0)<<endl;
   FPOS zerofp;
   zerofp.SetZero();
-  ctrl_pt_grad.push_back(zerofp);
+  // ctrl_pt_grad.push_back(zerofp);
   // std::cout<<"fastwl_init debug 0.3 "<<endl;
   // cout<<"fastwl_init debug 1"<<endl;
   // cout<<ctrl_pts[0]<<endl;
@@ -1105,6 +1574,7 @@ void fastWL_update() {
     tmp2.x = ctrl_pts[i - 1].x + intervalX;
     tmp2.y = ctrl_pts[i - 1].y + intervalY;
     ctrl_pts.push_back(tmp2);
+    cal_2pin_WA_grads(ctrl_pts[i], ctrl_pt_grad[i]);
     // ctrl_pt_grad.push_back(zerofp);
     // ctrl_pt_grad[i].x = ctrl_pt_grad[i].y = 0.0;
     // linearFunc.push_back(zerofp);
@@ -1112,6 +1582,7 @@ void fastWL_update() {
     // cout<<ctrl_pts.at(i).y<<endl;
   }
   linearFunc_update();
+  linearFunc_update_3pin();
 }
 void linearFunc_update() {
   FPOS inteval;
@@ -1651,6 +2122,15 @@ void net_update_wa(FPOS *st) {
         netupdate_runtime_pinnet += time;
         time_start(&time);
       }
+      if(timeon && net->pinCNTinObject == 3) {
+        time_end(&time);
+        // cout << "GetCost Grad: " << time << endl;
+        // grad_update_runtime += time;
+        // lc_update_runtime += time;
+
+        netupdate_runtime_3pinnet += time;
+        time_start(&time);
+      }
     }
   }
 }
@@ -1701,10 +2181,13 @@ void net_update_wa_fast(FPOS *st) {
     MinAdmitLength.x = 30 * wlen_cof_inv.x;
     MinAdmitLength.y = 30 * wlen_cof_inv.y;
     FPOS AdmitInterval;
-    AdmitInterval.x = MinAdmitLength.x*0.05;
-    AdmitInterval.y = MinAdmitLength.y*0.05;
-    cout<<"MinAdmitLength = "<<MinAdmitLength.x<<", "<<MinAdmitLength.y<<endl;
-    cout<<"AdmitInterval = "<<AdmitInterval.x<<", "<<AdmitInterval.y<<endl;
+    AdmitInterval.x = MinAdmitLength.x * 0.05;
+    AdmitInterval.y = MinAdmitLength.y * 0.05;
+    // cout << "MinAdmitLength = " << MinAdmitLength.x << ", " <<
+    // MinAdmitLength.y
+    //      << endl;
+    // cout << "AdmitInterval = " << AdmitInterval.x << ", " << AdmitInterval.y
+    //      << endl;
 #pragma omp for
     for(i = 0; i < netCNT; i++) {
       NET *net = &netInstance[i];
@@ -1713,7 +2196,8 @@ void net_update_wa_fast(FPOS *st) {
       net->min_y = net->terminalMin.y;
       net->max_x = net->terminalMax.x;
       net->max_y = net->terminalMax.y;
-      if(net->pinCNTinObject == 2) {
+      // if(net->pinCNTinObject < 4) {
+      if(1) {
         for(int j = 0; j < net->pinCNTinObject; j++) {
           PIN *pin = net->pin[j];
 
@@ -1758,41 +2242,33 @@ void net_update_wa_fast(FPOS *st) {
             fp.y = center.y + pof.y;
             pin->fp = fp;
 
-            if(fp.x > net->max_x)
-            {
+            if(fp.x > net->max_x) {
               net->max2nd_x = net->max_x;
               net->max_x = fp.x;
             }
-            else if(fp.x > net->max2nd_x)
-            {
+            else if(fp.x > net->max2nd_x) {
               net->max2nd_x = fp.x;
             }
-            if(fp.y > net->max_y)
-            {
+            if(fp.y > net->max_y) {
               net->max2nd_y = net->max_y;
               net->max_y = fp.y;
             }
-            else if(fp.y > net->max2nd_y)
-            {
+            else if(fp.y > net->max2nd_y) {
               net->max2nd_y = fp.y;
             }
-            //for min
-            if(fp.x < net->min_x)
-            {
+            // for min
+            if(fp.x < net->min_x) {
               net->min2nd_x = net->min_x;
               net->min_x = fp.x;
             }
-            else if(fp.x < net->min2nd_x)
-            {
+            else if(fp.x < net->min2nd_x) {
               net->min2nd_x = fp.x;
             }
-            if(fp.y < net->min_y)
-            {
+            if(fp.y < net->min_y) {
               net->min2nd_y = net->min_y;
               net->min_y = fp.y;
             }
-            else if(fp.y < net->min2nd_y)
-            {
+            else if(fp.y < net->min2nd_y) {
               net->min2nd_y = fp.y;
             }
           }
@@ -1804,27 +2280,28 @@ void net_update_wa_fast(FPOS *st) {
         // cout<<"net  max ="<<net->max_x<<", "<<net->max_y<<endl;
         // cout<<"net 2nd min ="<<net->min2nd_x<<", "<<net->min2nd_y<<endl;
         // cout<<"net 2nd max ="<<net->max2nd_x<<", "<<net->max2nd_y<<endl;
-        if((net->max_x - net->min_x)>MinAdmitLength.x)
-        {
-          cout<<"find long net x" <<endl;
-        }
-        if((net->max_x - net->min_x)>MinAdmitLength.x&&(net->min2nd_x-net->min_x)>AdmitInterval.x&&(net->max_x>net->max2nd_x)>AdmitInterval.x)
-        {
-          net->simple_multinet.x = 1;
-          cout<<"find simple net x"<<endl;
-        }
-        else{
-          net->simple_multinet.x = 0;
-        }
+        // if((net->max_x - net->min_x) > MinAdmitLength.x) {
+        //   cout << "find long net x" << endl;
+        // }
+        // if((net->max_x - net->min_x) > MinAdmitLength.x &&
+        //    (net->min2nd_x - net->min_x) > AdmitInterval.x &&
+        //    (net->max_x > net->max2nd_x) > AdmitInterval.x) {
+        //   net->simple_multinet.x = 1;
+        //   cout << "find simple net x" << endl;
+        // }
+        // else {
+        //   net->simple_multinet.x = 0;
+        // }
 
-        if((net->max_y - net->min_y)>MinAdmitLength.y&&(net->min2nd_y-net->min_y)>AdmitInterval.y&&(net->max_y>net->max2nd_y)>AdmitInterval.y)
-        {
-          net->simple_multinet.y = 1;
-          cout<<"find simple net y"<<endl;
-        }
-        else{
-          net->simple_multinet.y = 0;
-        }
+        // if((net->max_y - net->min_y) > MinAdmitLength.y &&
+        //    (net->min2nd_y - net->min_y) > AdmitInterval.y &&
+        //    (net->max_y > net->max2nd_y) > AdmitInterval.y) {
+        //   net->simple_multinet.y = 1;
+        //   cout << "find simple net y" << endl;
+        // }
+        // else {
+        //   net->simple_multinet.y = 0;
+        // }
       }
 
       //        cout << "size: " << sizeof(PIN) << endl;
@@ -1860,7 +2337,7 @@ void net_update_wa_fast(FPOS *st) {
       // we know that wlen_cof is 1/ gamma.
       // See main.cpp wcof00 and wlen.cpp: wcof_init.
       //
-      if(net->pinCNTinObject < 3)  // apply fast model in 2 pin net
+      if(net->pinCNTinObject < 4)  // apply fast model in 2 pin net
       {
         continue;
       }

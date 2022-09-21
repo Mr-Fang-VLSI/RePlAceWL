@@ -119,8 +119,8 @@ int ctrl_pt_num;
 vector<FPOS> ctrl_pts ;
 vector<FPOS>ctrl_pt_grad;
 vector<FPOS>ctrl_pt_grad_3pin;
-vector<pair<FPOS,prec>>linearFuncX_3pin;
-vector<pair<FPOS,prec>>linearFuncY_3pin;
+vector<pair<FPOS,FPOS>>linearFuncX_3pin;//截距，斜率
+vector<pair<FPOS,FPOS>>linearFuncY_3pin;
 vector<FPOS>linearFuncX;
 vector<FPOS>linearFuncY;
 
@@ -257,7 +257,9 @@ prec cGP2D_opt_phi_cof;
 prec inv_RAND_MAX;
 prec wlgrad_update_runtime = 0;
 prec runtime_2pinnet = 0;
+prec runtime_3pinnet = 0;
 prec netupdate_runtime_pinnet = 0;
+prec netupdate_runtime_3pinnet = 0;
 unsigned extPt1_2ndOrder;
 unsigned extPt2_2ndOrder;
 unsigned extPt1_1stOrder;

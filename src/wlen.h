@@ -76,8 +76,13 @@ extern vector<FPOS>ctrl_pts;
 extern vector<FPOS>ctrl_pt_grad;
 extern vector<FPOS>linearFuncX;
 extern vector<FPOS>linearFuncY;
+extern vector<FPOS>ctrl_pt_grad_3pin;
+extern vector<pair<FPOS,FPOS>>linearFuncX_3pin;
+extern vector<pair<FPOS,FPOS>>linearFuncY_3pin;
 extern prec runtime_2pinnet;
 extern prec netupdate_runtime_pinnet;
+extern prec runtime_3pinnet;
+extern prec netupdate_runtime_3pinnet;
 struct EXP_ST {
   prec x;
   prec val;
@@ -157,6 +162,8 @@ void net_update_lse(FPOS *st);
 void net_update_wa(FPOS *st);
 void net_update_wa_fast(FPOS *st);
 
+void net_update_wa_fast_3pinNet();
+
 prec GetHpwl();
 prec UpdateNetAndGetHpwl();
 
@@ -177,11 +184,14 @@ void UpdateNetMinMaxPin2();
 void update_pin2(void);
 
 void fastWL_init(int controlNum);
+void fastWL_init_3pin(int controlNum);
 
 void fastWL_update();
+void fastWL_update_3pin();
 void linearFunc_update();
+void linearFunc_update_3pin();
 void cal_2pin_WA_grads(FPOS dist,FPOS& grad);
-
+void cal_3pin_WA_grads(FPOS dist,FPOS& grad);
 enum { LSE, WA };
 
 

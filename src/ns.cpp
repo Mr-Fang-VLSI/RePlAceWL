@@ -944,6 +944,8 @@ void myNesterov::SummarizeNesterovOpt(int last_index) {
   cout<<"wlgrad update runtime := "<<wlgrad_update_runtime<<endl;
   cout<<"2pin net grad update runtime :="<<runtime_2pinnet<<endl;
   cout<<"2pin net update runtime :="<<netupdate_runtime_pinnet<<endl;
+  cout<<"3pin net grad update runtime :="<<runtime_3pinnet<<endl;
+  cout<<"3pin net update runtime :="<<netupdate_runtime_3pinnet<<endl;
   if(STAGE == mGP2D) {
     mGP2D_iterCNT = last_index + 1;
     hpwl_mGP2D = it->tot_hpwl;
