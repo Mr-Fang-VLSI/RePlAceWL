@@ -472,6 +472,8 @@ void wlen_grad_wa(int cell_idx, FPOS *grad) {
       // cout << "GetCost Grad: " << time << endl;
       time_start(&time);
     }
+    
+    get_net_wlen_grad_wa(pin->fp, net, pin, &net_grad);
     if(timeon && net->pinCNTinObject == 2) {
       time_end(&time);
       // cout << "GetCost Grad: " << time << endl;
@@ -480,8 +482,6 @@ void wlen_grad_wa(int cell_idx, FPOS *grad) {
       runtime_2pinnet += time;
       time_start(&time);
     }
-    get_net_wlen_grad_wa(pin->fp, net, pin, &net_grad);
-
     float curTimingWeight = netInstance[pin->netID].timingWeight;
     // Timing Control Parts
     // curTimingWeight = netWeightBase + min(max(0.0f, netWeightBound -
