@@ -118,6 +118,9 @@ int ctrl_pt_num;
 
 vector<FPOS> ctrl_pts ;
 vector<FPOS>ctrl_pt_grad;
+vector<FPOS>ctrl_pt_grad_3pin;
+vector<pair<FPOS,prec>>linearFuncX_3pin;
+vector<pair<FPOS,prec>>linearFuncY_3pin;
 vector<FPOS>linearFuncX;
 vector<FPOS>linearFuncY;
 
@@ -396,6 +399,11 @@ bool isFastMode;
 FPOS FASTWL_TOT;
 FPOS FASTWL_HALF;
 FPOS FASTWL_INTERVAL;
+prec grad_tot_diff = 0;
+prec grad_out_diff = 0;
+prec tot_grad = 0;
+prec net_tot_overIter = 0;
+prec net_fit_overIter = 0;
 ///////////////////////////////////////////////////////////
 
 Tcl_Interp* _interp;
