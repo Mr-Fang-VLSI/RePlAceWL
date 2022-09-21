@@ -118,6 +118,9 @@ int ctrl_pt_num;
 
 vector<FPOS> ctrl_pts ;
 vector<FPOS>ctrl_pt_grad;
+vector<FPOS>ctrl_pt_grad_3pin;
+vector<pair<FPOS,prec>>linearFuncX_3pin;
+vector<pair<FPOS,prec>>linearFuncY_3pin;
 vector<FPOS>linearFuncX;
 vector<FPOS>linearFuncY;
 

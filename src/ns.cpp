@@ -683,7 +683,10 @@ int myNesterov::DoNesterovOptimization(Timing::Timing &TimingInst) {
 
           x0_st[j] = GetCoordiLayoutInside(u, half_densize);
           // auto temp = y0_st[j];
+          prec tempy0 = y_st[j].x;
           y0_st[j] = GetCoordiLayoutInside(v, half_densize);
+          prec move = tempy0 - y0_st[j].x;
+          cout<<"move = "<<move<<endl;
           // if (temp.x == y0_st[j].x && temp.y == y0_st[j].y) ++cnt;
         }
       }

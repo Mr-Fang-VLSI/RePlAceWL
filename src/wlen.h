@@ -74,6 +74,7 @@ extern FPOS FASTWL_INTERVAL;
 
 extern vector<FPOS>ctrl_pts;
 extern vector<FPOS>ctrl_pt_grad;
+extern vector<FPOS>ctrl_pt_grad_3pin;
 extern vector<FPOS>linearFuncX;
 extern vector<FPOS>linearFuncY;
 extern prec runtime_2pinnet;

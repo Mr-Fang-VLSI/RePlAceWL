@@ -822,13 +822,12 @@ void get_net_wlen_grad_wa(FPOS obj, NET *net, PIN *pin, FPOS *grad) {
           (grad_sum_num2.y * sum_denom2.y + grad_sum_denom2.y * sum_num2.y) /
           (sum_denom2.y * sum_denom2.y);
     }
-    
+
     grad->x = grad1.x - grad2.x;
     grad->y = grad1.y - grad2.y;
   }
 
-  if(fastWL && net->pinCNTinObject == 2)
-  {
+  if(fastWL && net->pinCNTinObject == 2) {
     FPOS grad_sum_num1, grad_sum_num2;
     FPOS grad_sum_denom1, grad_sum_denom2;
     FPOS grad1;
@@ -1013,11 +1012,9 @@ void get_net_wlen_grad_wa(FPOS obj, NET *net, PIN *pin, FPOS *grad) {
       // }
     }
     prec delta = 0.0;
-    if(grad_ref.x - grad->x>delta ||grad_ref.x - grad->x<-delta)
-    {
+    if(grad_ref.x - grad->x > delta || grad_ref.x - grad->x < -delta) {
       // cout<<"ref grad x = "<<grad_ref.x<< " grad x = "<<grad->x<<endl;
       prec tot = FASTWL_HALF.x;
-
 
       i = (int)((dist.x + tot) * FASTWL_INTERVAL.x);
       // cout<<"i = "<<i<<endl;
@@ -1028,52 +1025,46 @@ void get_net_wlen_grad_wa(FPOS obj, NET *net, PIN *pin, FPOS *grad) {
       // cout<<"ctrl_pt_grad[i].x = " <<ctrl_pt_grad[i].x<<endl;
 
       prec diff = grad_ref.x - grad->x;
-      if(diff <0)
-      {
+      if(diff < 0) {
         diff = -diff;
       }
-      if(grad->x>0)
-      {
-        tot_grad+=grad->x;
+      if(grad->x > 0) {
+        tot_grad += grad->x;
       }
-      else{
-        tot_grad-=grad->x;
+      else {
+        tot_grad -= grad->x;
       }
       grad_tot_diff += diff;
       i = (int)((dist.x + tot) * FASTWL_INTERVAL.x);
-      if(dist.x <= ctrl_pts[0].x||dist.x >= ctrl_pts[ctrl_pt_num - 1].x) {
-      grad_out_diff += diff;
+      if(dist.x <= ctrl_pts[0].x || dist.x >= ctrl_pts[ctrl_pt_num - 1].x) {
+        grad_out_diff += diff;
       }
     }
-    if(grad_ref.y - grad->y>delta ||grad_ref.y - grad->y<-delta)
-    {
+    if(grad_ref.y - grad->y > delta || grad_ref.y - grad->y < -delta) {
       // cout<<"ref grad y = "<<grad_ref.y<<"grad y = "<<grad->y<<endl;
       prec tot = FASTWL_HALF.y;
 
       prec diff = grad_ref.y - grad->y;
-      if(diff <0)
-      {
+      if(diff < 0) {
         diff = -diff;
       }
       grad_tot_diff += diff;
       i = (int)((dist.y + tot) * FASTWL_INTERVAL.y);
-      if(dist.y <= ctrl_pts[0].y||dist.y >= ctrl_pts[ctrl_pt_num - 1].y) {
-      grad_out_diff += diff;
+      if(dist.y <= ctrl_pts[0].y || dist.y >= ctrl_pts[ctrl_pt_num - 1].y) {
+        grad_out_diff += diff;
       }
-    
-      if(grad->y>0)
-      {
-        tot_grad+=grad->y;
+
+      if(grad->y > 0) {
+        tot_grad += grad->y;
       }
-      else{
-        tot_grad-=grad->y;
+      else {
+        tot_grad -= grad->y;
       }
       // cout<<"i = "<<i<<endl;
       // cout<<"dist.y = "<<dist.y<<endl;
       // cout<<1.0/FASTWL_INTERVAL.y<<endl;
       // cout<<tot<<endl;
     }
-    
   }
 }
 
@@ -1239,7 +1230,7 @@ void fastWL_update() {
   prec totX = intervalX * ((prec)ctrl_pt_num - 1.0);
   prec intervalY = (prec)2.56 / wlen_cof.GetX() / ((prec)ctrl_pt_num - 1.0);
   prec totY = intervalY * ((prec)ctrl_pt_num - 1.0);
-  cout<<"wlen cof = "<<wlen_cof.GetX()<<" "<<wlen_cof.GetY()<<endl;
+  cout << "wlen cof = " << wlen_cof.GetX() << " " << wlen_cof.GetY() << endl;
   // prec intervalX = (prec)25.6/wlen_cof.GetX() /((prec)ctrl_pt_num -1.0) ;
   // prec totX = intervalX*((prec)ctrl_pt_num -1.0);
   // prec intervalY = (prec)25.6/wlen_cof.GetX() /((prec)ctrl_pt_num -1.0) ;
@@ -1289,7 +1280,11 @@ void linearFunc_update() {
         (ctrl_pt_grad[i + 1].y - ctrl_pt_grad[i].y) * FASTWL_INTERVAL.y;
     linearFuncY[i].y = ctrl_pt_grad[i].y - (linearFuncY[i].x * ctrl_pts[i].y);
     // cout<<"grad is"<<ctrl_pt_grad[i+1].x<<" "<<ctrl_pt_grad[i].x<<endl;
-    // cout<<"ipos="<<ctrl_pts[i].x<<", xk = "<<linearFuncX[i].x<<",xb="<<linearFuncX[i].y<<" interval x"<<inteval.x<<endl; cout<<"ipos="<<ctrl_pts[i].y<<", yk = "<<linearFuncY[i].x<<",yb="<<linearFuncY[i].y<<" interval y"<<inteval.y<<endl;
+    // cout<<"ipos="<<ctrl_pts[i].x<<", xk =
+    // "<<linearFuncX[i].x<<",xb="<<linearFuncX[i].y<<" interval
+    // x"<<inteval.x<<endl; cout<<"ipos="<<ctrl_pts[i].y<<", yk =
+    // "<<linearFuncY[i].x<<",yb="<<linearFuncY[i].y<<" interval
+    // y"<<inteval.y<<endl;
   }
 }
 void cal_2pin_WA_grads(FPOS dist, FPOS &grad) {
@@ -1729,18 +1724,16 @@ void net_update_wa(FPOS *st) {
       prec max_y = net->max_y;
       // cout<<"distance rate = "<<(max_x-min_x)/ wlen_cof.x<<endl;
       // cout<<"distance rate = "<<(max_y-min_y)/ wlen_cof.y<<endl;
-      if(net->pinCNTinObject>2){
-        net_tot_overIter +=2;
-      if((max_x-min_x)/ wlen_cof.x > 20)
-      {
-        net_fit_overIter++;
+      if(net->pinCNTinObject > 2) {
+        net_tot_overIter += 2.0;
+        if((max_x - min_x) / wlen_cof_inv.x > 20) {
+          net_fit_overIter += 1.0;
+        }
+        if((max_y - min_y) / wlen_cof_inv.y > 20) {
+          net_fit_overIter += 1.0;
+        }
       }
-      if((max_y-min_y)/ wlen_cof.y > 20)
-      {
-        net_fit_overIter++;
-      }
-      }
-      
+
       FPOS sum_num1, sum_num2;
       FPOS sum_denom1, sum_denom2;
 
@@ -1914,19 +1907,16 @@ void net_update_wa_fast(FPOS *st) {
       prec min_y = net->min_y;
       prec max_x = net->max_x;
       prec max_y = net->max_y;
-      if(net->pinCNTinObject>2)
-      {
-        net_tot_overIter +=2.0;
-      if((max_x-min_x)/ wlen_cof.x > 30)
-      {
-        net_fit_overIter+=1.0;
+      if(net->pinCNTinObject > 2) {
+        net_tot_overIter += 2.0;
+        if((max_x - min_x) * wlen_cof.x > 0.5) {
+          net_fit_overIter += 1.0;
+        }
+        if((max_y - min_y) * wlen_cof.y > 0.5) {
+          net_fit_overIter += 1.0;
+        }
       }
-      if((max_y-min_y)/ wlen_cof.y > 30)
-      {
-        net_fit_overIter+=1.0;
-      }
-      }
-      
+
       FPOS sum_num1, sum_num2;
       FPOS sum_denom1, sum_denom2;
 
