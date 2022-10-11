@@ -82,8 +82,9 @@
 
 #include <defrReader.hpp>
 #include <defiAlias.hpp>
+#include </home/RePlAceWL_1004/RePlAceWL/src/bookShelfIO.h>
 
-#include "replace_private.h"
+#include "/home/RePlAceWL_1004/RePlAceWL/src/replace_private.h"
 #define INIT_STR "!@#!@#"
 
 using std::cout;
@@ -94,15 +95,15 @@ using std::pair;
 
 REPLACE_NAMESPACE_OPEN
 
-class Circuit {
+class Circuit_ {
  public:
-  Circuit();
+  Circuit_();
 
   //
   // LEF/DEF is essential,
   // but verilog is optional
   //
-  Circuit(vector< string >& lefStor, string defFilename, bool isVerbose = false); 
+  Circuit_(vector< string >& lefStor, string defFilename, bool isVerbose = false); 
   void Init(vector< string >& lefStor, string defFilename,
             bool isVerbose = false);
   
@@ -245,7 +246,7 @@ struct NetInfo {
       : macroIdx(_macroIdx), compIdx(_compIdx), pinIdx(_pinIdx){};
 };
 
-extern Circuit __ckt;
+extern Circuit_ __ckt;
 
 REPLACE_NAMESPACE_CLOSE
 
@@ -260,12 +261,12 @@ void ReadPlLefDef(const char* fileName, bool isNameConvert = false);
 
 void WriteDef(const char* defOutput);
 
-void GenerateModuleTerminal(Replace::Circuit& __ckt);
-void GenerateRow(Replace::Circuit& __ckt);
-void GenerateFullRow(Replace::Circuit& __ckt);
-void GenerateDummyCell(Replace::Circuit& __ckt);
+void GenerateModuleTerminal(Replace::Circuit_& __ckt);
+void GenerateRow(Replace::Circuit_& __ckt);
+void GenerateFullRow(Replace::Circuit_& __ckt);
+void GenerateDummyCell(Replace::Circuit_& __ckt);
 
-void GenerateNetDefOnly(Replace::Circuit& __ckt);
+void GenerateNetDefOnly(Replace::Circuit_& __ckt);
 
 /////////////////////////////////////////////////////
 // DieRect struct  
@@ -314,7 +315,7 @@ public:
 
 
 // return Component Index
-inline int GetDefComponentIdx(Replace::Circuit& __ckt, string& compName) {
+inline int GetDefComponentIdx(Replace::Circuit_& __ckt, string& compName) {
   auto dcPtr = __ckt.defComponentMap.find(compName);
   if(dcPtr == __ckt.defComponentMap.end()) {
     cout << "** ERROR:  Component Instance ( " << compName
@@ -326,7 +327,7 @@ inline int GetDefComponentIdx(Replace::Circuit& __ckt, string& compName) {
 }
 
 // return Macro Index
-inline int GetLefMacroIdx(Replace::Circuit& __ckt, string& macroName) {
+inline int GetLefMacroIdx(Replace::Circuit_& __ckt, string& macroName) {
   auto mcPtr = __ckt.lefMacroMap.find(macroName);
   if(mcPtr == __ckt.lefMacroMap.end()) {
     cout << "** ERROR:  Macro Instance ( " << macroName
@@ -337,7 +338,7 @@ inline int GetLefMacroIdx(Replace::Circuit& __ckt, string& macroName) {
 }
 
 // return Pin Index
-inline int GetLefMacroPinIdx(Replace::Circuit& __ckt, int macroIdx,
+inline int GetLefMacroPinIdx(Replace::Circuit_& __ckt, int macroIdx,
                              string& pinName) {
   auto pinPtr = __ckt.lefPinMapStor[macroIdx].find(pinName);
   if(pinPtr == __ckt.lefPinMapStor[macroIdx].end()) {
@@ -348,7 +349,7 @@ inline int GetLefMacroPinIdx(Replace::Circuit& __ckt, int macroIdx,
   return pinPtr->second;
 }
 
-inline int GetDefPinIdx(Replace::Circuit& __ckt, string& pinName) {
+inline int GetDefPinIdx(Replace::Circuit_& __ckt, string& pinName) {
   auto pinPtr = __ckt.defPinMap.find(pinName);
   if(pinPtr == __ckt.defPinMap.end()) {
     cout << "** ERROR:  Pin Instance ( " << pinName

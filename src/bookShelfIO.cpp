@@ -878,8 +878,9 @@ int read_nodes_3D(char *input) {
   terminalCNT = atoi(token);
 
   moduleCNT -= terminalCNT;
-  moduleInstance =
-      (struct MODULE *)malloc(sizeof(struct MODULE) * moduleCNT);
+  // moduleInstance =
+  //     (struct MODULE *)malloc(sizeof(struct MODULE) * moduleCNT);
+  moduleInstance.resize(moduleCNT);
   terminalInstance =
       (struct TERM *)malloc(sizeof(struct TERM) * terminalCNT);
 
@@ -985,8 +986,10 @@ int read_nodes_3D(char *input) {
           curModule->size.x * curModule->size.y;
 
       // why this in here....
-      curModule->pof = NULL;
-      curModule->pin = NULL;
+      // curModule->pof = NULL;
+      // curModule->pin = NULL;
+      curModule->pof.clear();
+      curModule->pin.clear();
       curModule->netCNTinObject = 0;
       curModule->pinCNTinObject = 0;
 
@@ -1051,8 +1054,10 @@ int read_nodes_3D(char *input) {
       curTerminal->area = curTerminal->size.x * curTerminal->size.y;
 
       // why this in here..
-      curTerminal->pof = NULL;
-      curTerminal->pin = NULL;
+      // curTerminal->pof = NULL;
+      // curTerminal->pin = NULL;
+      curTerminal->pof.clear();
+      curTerminal->pin.clear();
       curTerminal->netCNTinObject = 0;
       curTerminal->pinCNTinObject = 0;
 
@@ -1229,8 +1234,7 @@ int read_nets_3D(char *input) {
 
       if(isTerminal == false) {
         curModule = &moduleInstance[moduleID];
-        AddPinInfoForModuleAndTerminal(&curModule->pin, &curModule->pof,
-                                       curModule->pinCNTinObject++, offset,
+        AddPinInfoForModuleAndTerminal(&curModule->pin, &curModule->pof,curModule->pinCNTinObject++, offset,
                                        moduleID, i, j, pid++, io, isTerminal);
       }
       else {

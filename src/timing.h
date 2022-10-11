@@ -1,3 +1,4 @@
+#include <vector>
 #ifndef __REPLACE_TIMING__
 #define __REPLACE_TIMING__ 0
 
@@ -129,7 +130,7 @@ struct wire {
 class Timing {
  private:
   
-  MODULE* _modules;
+  std::vector<MODULE>* _modules;
   TERM* _terms;
 
   NET* _nets;
@@ -194,7 +195,7 @@ class Timing {
   void UpdateNetWeightSta();
 
  public:
-  Timing(MODULE* modules, TERM* terms, NET* nets, int netCnt, PIN* pins,
+  Timing(std::vector<MODULE> &modules, TERM* terms, NET* nets, int netCnt, PIN* pins,
          int pinCnt, 
          vector< vector< std::string > >& mPinName,
          vector< vector< std::string > >& tPinName, 

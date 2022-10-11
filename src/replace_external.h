@@ -1,10 +1,11 @@
+
 #ifndef __REPLACE_EXTERNAL__
 #define __REPLACE_EXTERNAL__ 0
 
 // No hope to isolate right now...
-#include "replace_private.h"
-#include "lefdefIO.h"
-
+#include "/home/RePlAceWL_1004/RePlAceWL/src/replace_private.h"
+// #include "/home/RePlAceWL_1004/RePlAceWL/src/lefdefIO.h"
+#include <lefdefIO.h>
 
 // SWIG refuse to be inside replace_external...
 struct instance_info {

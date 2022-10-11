@@ -28,7 +28,7 @@ inline string Timing::GetPinName(PIN* curPin, bool isEscape) {
 
   // below is common
   string name = (curPin->term) ? string(_terms[curPin->moduleID].Name())
-                               : string(_modules[curPin->moduleID].Name());
+                               : string(_modules->at(curPin->moduleID).Name());
 
   if( isEscape ) {
     SetEscapedStr(name);

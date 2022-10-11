@@ -196,7 +196,7 @@ inline string Timing::GetPinName(PIN* curPin, bool isEscape) {
 
   // below is common
   string name = (curPin->term) ? string(_terms[curPin->moduleID].Name())
-                               : string(_modules[curPin->moduleID].Name());
+                               : string(_modules->at(curPin->moduleID).Name());
 
   if( isEscape ) {
     SetEscapedStr(name);
@@ -226,10 +226,10 @@ inline string Timing::GetPinName(PinInfo& curPin, bool isEscape) {
 }
 
   
-Timing::Timing(MODULE* modules, TERM* terms, NET* nets, int netCnt, PIN* pins,
+Timing::Timing(std::vector<MODULE> &modules, TERM* terms, NET* nets, int netCnt, PIN* pins,
          int pinCnt, vector< vector< std::string > >& mPinName,
          vector< vector< std::string > >& tPinName, std::string clkName, float clkPeriod)
-  : _modules(modules),
+  : _modules(&modules),
   _terms(terms),
   _nets(nets),
   _netCnt(netCnt),

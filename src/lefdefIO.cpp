@@ -56,11 +56,11 @@
 #include <boost/functional/hash.hpp>
 
 using namespace std;
-using Replace::NetInfo;
-using Replace::Circuit;
+// using Replace::NetInfo;
+// using Replace::Circuit;
 
 
-Replace::Circuit::Circuit() : lefManufacturingGrid(DBL_MIN) {
+Replace::Circuit_::Circuit_() : lefManufacturingGrid(DBL_MIN) {
 #ifdef USE_GOOGLE_HASH
   lefMacroMap.set_empty_key(INIT_STR);
   lefViaMap.set_empty_key(INIT_STR);
@@ -73,7 +73,7 @@ Replace::Circuit::Circuit() : lefManufacturingGrid(DBL_MIN) {
 #endif
 };
   
-Replace::Circuit::Circuit(vector< string >& lefStor, string defFilename, bool isVerbose)
+Replace::Circuit_::Circuit_(vector< string >& lefStor, string defFilename, bool isVerbose = false)
       : lefManufacturingGrid(DBL_MIN) {
 #ifdef USE_GOOGLE_HASH
     lefMacroMap.set_empty_key(INIT_STR);
@@ -702,9 +702,9 @@ void SetSizeForObsMacro(int macroIdx, MODULE* curModule, int orient) {
 //
 // terminal_pmin & terminal_pmax must be updated...
 void GenerateModuleTerminal(Replace::Circuit& __ckt) {
-  moduleInstance =
-      (MODULE*)malloc(sizeof(MODULE) * __ckt.defComponentStor.size());
-
+  // moduleInstance =
+  //     (MODULE*)malloc(sizeof(MODULE) * __ckt.defComponentStor.size());
+  moduleInstance.resize(__ckt.defComponentStor.size());
   // to fast traverse when building TerminalInstance
   vector< int > fixedComponent;
 

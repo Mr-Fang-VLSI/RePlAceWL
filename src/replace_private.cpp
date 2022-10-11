@@ -1,4 +1,8 @@
 #include "replace_private.h"
+#include <cmath>
+#include <cstddef>
+#include <string>
+#include <vector>
 
 
 using std::string;
@@ -201,6 +205,229 @@ const char* MODULE::Name() {
   return moduleNameStor[idx].c_str(); 
 }
 
+void MODULE::SetContainerType(){
+  std::string Name = moduleNameStor[idx];
+  std::vector<std::string> clause;
+  char breaksign = '_';
+  // cout<<"name is "<<Name<<endl;
+  
+  BreakDownName(Name, breaksign, clause);
+  // for(int i = 0;i<clause.size();i++)
+  // {
+  //   cout<<clause.at(i)<<" ";
+  // }
+  
+  // cout<<Name<<endl;
+  std::vector<std::string>::iterator it;
+  it = find(clause.begin(),clause.end(),"genper");
+  type = "";
+  if(it!=clause.end())
+  {
+    type = "PE";
+    containerCORD.x = std::stoi(*(it+1));
+    it = find(clause.begin(),clause.end(),"genpec");
+    containerCORD.y = std::stoi(*(it+1));
+    // cout<<"PE cord = "<<containerCORD.x<<" "<<containerCORD.y<<endl;
+    // cout<<Name<<endl;
+  }
+  else 
+  {
+    it = find(clause.begin(),clause.end(),"genbc");
+    if(it != clause.end())
+    {
+      type = "buffer";
+      containerCORD.x = std::stoi(*(it+1));
+    }
+    else{
+      type = "";
+    }
+    
+    
+  }
+  
+  std::vector<std::string>().swap(clause);
+  
+}
+void MODULE::SetContainerCORD(std::vector<std::string>& clause){
+  if(type ==  "PE")
+  {
+    std::vector<std::string>::iterator it;
+    // it = find(clause.begin().)
+  }
+  else{
+
+  }
+}
+void BreakDownName(std::string Name,char breaksign,std::vector<std::string>& clause){
+  
+  int pos = 0;
+  for(int i = 0;i < Name.length();i++)
+  {
+    if(Name.at(i) == breaksign)
+    {
+      clause.push_back(Name.substr(pos,i-pos));
+      pos = (i+1)<Name.length()?(i+1):i;
+    }
+  }
+  clause.push_back(Name.substr(pos,Name.length()-1-pos));
+ 
+}
+
+void testNameBreak(){
+  MODULE* module;
+  for(int i = 0;i < moduleCNT;i++)
+  {
+    
+    module = &moduleInstance[i];
+    
+    string type;
+    
+    module->SetContainerType();
+    
+  }
+}
+int MODULE::containerID(int scale){
+  int id = 0;
+  if(type == "PE")
+  {
+    id = containerCORD.x*scale+containerCORD.y;
+  }
+  else if(type == "buffer"){
+    id = scale*scale + containerCORD.x;
+  }
+  return id;
+}
+void ClusterModuleAndNet(int scale){
+  cout<<"start cluster"<<endl;
+  MODULE* module;
+  int clusterModuleCNT = scale*(scale+1);
+  int j = clusterModuleCNT;
+  int PEpinCNT= 0;
+  int BuffpinCNT = 0;
+  for(int i = 0;i < moduleCNT;i++)
+  {
+    
+    module = &moduleInstance[i];
+    
+    
+    
+    module->SetContainerType();
+    if(module->type == "")
+    {
+      clusterModuleCNT++;
+    }
+    if(module->type =="PE"&& module->containerCORD.x == 0&&module->containerCORD.y == 0)
+    {
+      PEpinCNT +=  module->pinCNTinObject;
+      
+    }
+    if(module->type =="buffer"&& module->containerCORD.x == 0)
+    {
+      BuffpinCNT +=  module->pinCNTinObject;
+      
+    }
+    
+  }
+  // cout<<"pinCNT in PE"<<PEpinCNT<<endl;
+  // cout<<"clusterCNT "<<clusterModuleCNT<<endl;
+  // moduleInstance_origin = (struct MODULE *)malloc(sizeof(struct MODULE) * moduleCNT);
+  // moduleInstance_origin = moduleInstance;
+  
+  // free(moduleInstance);
+ 
+  // moduleInstance_origin = (struct MODULE *)malloc(sizeof(struct MODULE) * clusterModuleCNT);
+  cout<<" cluster debug 0"<<endl;
+ moduleInstance_origin.resize(clusterModuleCNT);
+  int PEcnt = scale*scale;
+  for(int i = 0;i < j;i++)
+  {
+    MODULE *tmpModule = &moduleInstance_origin[i];
+    
+    
+    if(j<PEcnt)
+    {
+      // tmpModule->pin = (struct PIN **)malloc(sizeof(struct PIN *) * PEpinCNT);
+      // tmpModule->pof = (struct FPOS*)malloc(sizeof(struct FPOS) * PEpinCNT);
+      tmpModule->pin.resize(PEpinCNT);
+      tmpModule->pof.resize(PEpinCNT);
+    }
+    else{
+      // tmpModule->pin = (struct PIN **)malloc(sizeof(struct PIN *) * BuffpinCNT);
+      // tmpModule->pof = (struct FPOS*)malloc(sizeof(struct FPOS) * BuffpinCNT);
+      tmpModule->pin.resize(BuffpinCNT);
+      tmpModule->pof.resize(BuffpinCNT);
+    }
+    
+  }
+  cout<<"cluster debug 4"<<endl;
+  MODULE* curModule;
+  for(int i = 0;i < moduleCNT;i++)
+  {
+    cout<<"cluster debug 4.4"<<endl;
+    module = &moduleInstance[i];
+    cout<<"cluster debug 4.5 type = "<<module->type<<endl;
+    if(module->type == "")
+    {
+      cout<<"cluster debug 4.7"<<endl;
+      moduleInstance_origin[j].cpy(module);
+      cout<<"cluster debug 5"<<endl;
+      j++;
+    }
+    else
+    {
+      int PEid;
+      cout<<"cluster debug 6"<<endl;
+      curModule = &moduleInstance_origin[PEid];
+      PEid = module->containerID(scale);
+      curModule->area += module->area;
+      for(int k = 0;k <  module->pinCNTinObject;k++)
+      {
+        curModule->pin[curModule->pinCNTinObject] = module->pin[k];
+        curModule->pinCNTinObject++;
+      }
+    }
+    
+  }
+  cout<<"cluster debug 11"<<endl;
+
+}
+
+void MODULE::cpy(MODULE* COPY)
+{
+  area = COPY->area;
+  pinCNTinObject = COPY->pinCNTinObject;
+  netCNTinObject = 0;
+  flg = COPY->flg;
+  tier = COPY->tier;
+  mac_idx = COPY->mac_idx;
+  ovlp_flg = COPY->ovlp_flg;
+  pmin = COPY->pmin;
+  pmax= COPY->pmax;
+  size= COPY->size;
+  half_size= COPY->pmin;
+  center= COPY->center;
+  pmin_lg= COPY->pmin_lg;
+  pmax_lg= COPY->pmax_lg;
+  cout<<"cluster debug 8"<<endl;
+  // pof = (struct FPOS*)malloc(sizeof(struct FPOS) * pinCNTinObject);
+  // pin= (struct PIN**)malloc(sizeof(struct PIN*) * pinCNTinObject);
+  pof.resize(pinCNTinObject);
+  pin.resize(pinCNTinObject);
+  cout<<"cluster debug 9"<<endl;
+  // type = COPY->type;
+  cout<<"cluster debug 9.5"<<endl;
+  containerCORD.x = COPY->containerCORD.x;
+  containerCORD.y = COPY->containerCORD.y;
+  
+  
+  for(int i = 0;i < pinCNTinObject;i++)
+  {
+    pin[i] = COPY->pin[i];
+    pof[i].x = COPY->pof[i].x;
+    pof[i].y = COPY->pof[i].y;
+  }
+  cout<<"cluster debug 10"<<endl;
+}
 MODULE::MODULE()
   : pof(0),
   pin(0),
@@ -219,6 +446,8 @@ MODULE::MODULE()
     center.SetZero();
     pmin_lg.SetZero();
     pmax_lg.SetZero();
+    containerCORD.SetZero();
+    type = "";
   }
 
 void MODULE::Dump(string a) {

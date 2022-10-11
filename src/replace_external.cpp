@@ -372,16 +372,22 @@ replace_external::init_replace() {
   if( hasCustomNetWeight ) {
     initCustomNetWeight(net_weight_file); 
   }
-
+  ClusterModuleAndNet(16);
+  cout<<"init debug 0"<<endl;
   net_update_init();
+  cout<<"init debug 1"<<endl;
   init_tier();
+  cout<<"init debug 2"<<endl;
   build_data_struct(!isInitSeed);
+  cout<<"init debug 3"<<endl;
   update_instance_list();
+  cout<<"init debug 4"<<endl;
   if( write_bookshelf_mode ) {
     setup_before_opt();
     routeInst.Init();
     WriteBookshelf();  
   }
+  cout<<"init debug 10"<<endl;
   return true;
 }
 
@@ -499,18 +505,27 @@ void
 replace_external::update_instance_list() {
   if( instance_list.size() == 0 ) {
     for(int i=0; i<moduleCNT; i++) {
+      cout<<"update instance list debug 0"<<endl;
       MODULE* module = &moduleInstance[i];
       instance_info tmp;
+      cout<<"update instance list debug 1"<<endl;
       tmp.name = module->Name();
+      cout<<"update instance list debug 2"<<tmp.name<<endl;
       auto cmPtr = ckt->defComponentMap.find(tmp.name);
+      cout<<"update instance list debug 3"<<endl;
       tmp.master = ckt->defComponentStor[cmPtr->second].name();
-      tmp.x = module->pmin.x;
-      tmp.y = module->pmin.y;
+      cout<<"update instance list debug 4"<<endl;
+      tmp.x = (prec)module->pmin.x;
+      cout<<"update instance list debug 5 type"<<module->type<<endl;
+      tmp.y = (prec)module->pmin.y;
+      cout<<"update instance list debug 5.5 "<<tmp.x<<" "<<tmp.y<<endl;
       instance_list.push_back(tmp);
+      cout<<"update instance list debug 6"<<endl;
     }
   }
   else {
     for(int i=0; i<moduleCNT; i++) {
+      // cout<<"update instance list debug 1"<<endl;
       MODULE* module = &moduleInstance[i];
       instance_list[i].x = module->pmin.x;
       instance_list[i].y = module->pmin.y;

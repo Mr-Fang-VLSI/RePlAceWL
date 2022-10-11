@@ -65,6 +65,8 @@
 #include <cassert>
 
 #include <tcl.h>
+#include <string>
+#include "vector"
 
 #define PI 3.141592653589793238462L
 #define SQRT2 1.414213562373095048801L
@@ -247,8 +249,10 @@ struct MODULE {
   FPOS size;
   FPOS half_size;
   FPOS center;
-  FPOS *pof;
-  PIN **pin;
+  // FPOS *pof;
+  std::vector<FPOS> pof;
+  // PIN **pin;
+  std::vector<PIN*> pin;
   prec area;
   int idx;
   int netCNTinObject;
@@ -259,10 +263,15 @@ struct MODULE {
   int ovlp_flg;
   POS pmin_lg;
   POS pmax_lg;
-
+  std::string type;
+  POS containerCORD;
   const char* Name();
   MODULE();
   void Dump(std::string a);
+  void SetContainerCORD(std::vector<std::string>& clause);
+  void SetContainerType();
+  int containerID(int scale);
+  void cpy(MODULE* COPY);
 };
 
 
@@ -277,8 +286,11 @@ struct TERM {
   prec area;
   FPOS size;
   FPOS center;
-  FPOS *pof;
-  PIN **pin;
+  // FPOS *pof;
+  // PIN **pin;
+  std::vector<FPOS> pof;
+  // PIN **pin;
+  std::vector<PIN*> pin;
   int idx;
   int netCNTinObject;
   int pinCNTinObject;
@@ -287,7 +299,7 @@ struct TERM {
   bool isTerminalNI;
   prec PL_area;
   const char* Name();
-
+  
   TERM();
   void Dump();
 };
@@ -759,11 +771,14 @@ extern prec tileWidth, tileHeight;
 extern prec blockagePorosity;
 
 extern PIN *pinInstance;
-extern MODULE *moduleInstance;
+extern std::vector<MODULE> moduleInstance;
+// extern MODULE *moduleInstance;
+extern std::vector<MODULE> moduleInstance_origin;
 extern CELL *gcell_st;
 extern TERM *terminalInstance;
 
 extern NET *netInstance;
+extern NET *netInstance_origin;
 extern HASH_MAP< std::string, int > netNameMap;
 
 
@@ -948,7 +963,9 @@ void CallDetailPlace();
 void CallNtuPlacer3(const char *tier_dir, const char *tier_aux, const char *tier_pl);
 void CallNtuPlacer4h(const char *tier_dir, const char *tier_aux, const char *tier_pl);
 
-
+void BreakDownName(std::string Name,char breaksign,std::vector<std::string> &clause);
+void ClusterModuleAndNet(int scale);
+void testNameBreak();
 // 
 // Some utils for RePlAce.
 //

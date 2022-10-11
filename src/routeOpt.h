@@ -1,8 +1,9 @@
 #ifndef __REPLACE_ROUTE__
 #define __REPLACE_ROUTE__ 0
-#include "replace_private.h"
-#include "lefdefIO.h"
-
+#include <replace_private.h>
+// #include "/home/RePlAceWL_1004/RePlAceWL/src/lefdefIO.h"
+#include <lefdefIO.h>
+using namespace std;
 
 enum LayerDirection {
   Horizontal, Vertical
@@ -54,8 +55,8 @@ class RouteInstance {
     vector<int> _trackCount;
 
 
+    // Replace::Circuit* _ckt;
     Replace::Circuit* _ckt;
-
     float _defDbu; 
 
     float _unitX, _unitY;

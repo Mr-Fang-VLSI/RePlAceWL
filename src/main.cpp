@@ -96,7 +96,9 @@ string plotColorFile;
 
 int timingUpdateIter;
 PIN *pinInstance;
-MODULE *moduleInstance;
+std::vector<MODULE> moduleInstance;
+// MODULE *moduleInstance;
+std::vector<MODULE> moduleInstance_origin;
 int pinCNT;
 int moduleCNT;
 
@@ -123,6 +125,7 @@ vector<FPOS>linearFuncY;
 
 TERM *terminalInstance;
 NET *netInstance;
+NET *netInstance_origin;
 
 HASH_MAP< string, int > netNameMap;
 int terminalCNT;
@@ -1070,7 +1073,8 @@ void WriteBookshelf() {
 }
 
 void free_trial_mallocs() {
-  free(moduleInstance);
+  // free(moduleInstance);
+  std::vector<MODULE>().swap(moduleInstance);
   free(terminalInstance);
   free(netInstance);
   free(pinInstance);

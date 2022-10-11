@@ -41,16 +41,16 @@
 #ifndef __PL_IO__
 #define __PL_IO__
 
+#include <vector>
 #include "replace_private.h"
 #include "lefdefIO.h"
 #include "routeOpt.h"
-
 #define BUFFERSIZE 1000
 #define LINESIZE 2000
 
 using std::vector;
 using std::tuple;
-
+using std::string;
 // for *.nodes files
 struct NODES {
   long index;
@@ -108,7 +108,7 @@ void extract_sfx(char *f, char *s);
 
 void output_pl(char *output);
 
-void AddPinInfoForModuleAndTerminal(PIN ***pin, FPOS **pof, int currentPinCount,
+void AddPinInfoForModuleAndTerminal(std::vector<PIN*>* pin, std::vector<FPOS> *pof, int currentPinCount,
                                     FPOS offset, int curModuleIdx,
                                     int curNetIdx, int curPinIdxInNet,
                                     int curPinIdx, int curPinDirection,
