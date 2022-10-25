@@ -1,3 +1,4 @@
+#include <vector>
 #ifndef __REPLACE_TIMING__
 #define __REPLACE_TIMING__ 0
 

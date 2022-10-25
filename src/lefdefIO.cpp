@@ -704,6 +704,7 @@ void SetSizeForObsMacro(int macroIdx, MODULE* curModule, int orient) {
 void GenerateModuleTerminal(Replace::Circuit& __ckt) {
   moduleInstance =
       (MODULE*)malloc(sizeof(MODULE) * __ckt.defComponentStor.size());
+  // moduleInstance.resize(__ckt.defComponentStor.size());
 
   // to fast traverse when building TerminalInstance
   vector< int > fixedComponent;

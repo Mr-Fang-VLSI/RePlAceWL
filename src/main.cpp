@@ -38,6 +38,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ///////////////////////////////////////////////////////////////////////////////
 
+#include <replace_private.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -96,7 +97,10 @@ string plotColorFile;
 
 int timingUpdateIter;
 PIN *pinInstance;
+vector<PIN> pinInstance_origin;
+
 MODULE *moduleInstance;
+vector<MODULE> moduleInstance_origin;
 int pinCNT;
 int moduleCNT;
 
@@ -123,6 +127,10 @@ vector<FPOS>linearFuncY;
 
 TERM *terminalInstance;
 NET *netInstance;
+vector<NET> netInstance_origin;
+int netCNT_origin;
+int moduleCNT_origin;
+int pinCNT_origin;
 
 HASH_MAP< string, int > netNameMap;
 int terminalCNT;
@@ -882,10 +890,13 @@ void calcTSVweight() {
 
 void initialPlacement_main() {
   STAGE = INITIAL_PLACE;
+  cout<<"IP debug 0"<<endl;
   initial_placement();
+  cout<<"IP debug 1"<<endl;
   UpdateNetAndGetHpwl();
-
+  cout<<"IP debug 2"<<endl;
   PrintUnscaledHpwl("Initial Placement");
+  cout<<"IP debug 3"<<endl;
   place_backup = place;
 }
 
@@ -1071,6 +1082,8 @@ void WriteBookshelf() {
 
 void free_trial_mallocs() {
   free(moduleInstance);
+  // moduleInstance.clear();
+  // vector<MODULE>().swap(moduleInstance);
   free(terminalInstance);
   free(netInstance);
   free(pinInstance);

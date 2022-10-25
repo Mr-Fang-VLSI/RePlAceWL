@@ -103,30 +103,32 @@ void initial_placement() {
 
   VectorXf xcg_x(moduleCNT), xcg_b(moduleCNT), ycg_x(moduleCNT),
       ycg_b(moduleCNT);
-
+  // cout<<"IP loop start"<<endl;
   for(int i = 0;; i++) {
     if(i >= numInitPlaceIter) {
       break;
     }
-
+    // cout<<"IP loop debug 0"<<endl;
     time_start(&time_s);
     CreateSparseMatrix(xcg_x, xcg_b, ycg_x, ycg_b, eMatX, eMatY);
-
+    // cout<<"IP loop debug 1"<<endl;
     BiCGSTAB< SMatrix, IdentityPreconditioner > solver;
     solver.setMaxIterations(itmax);
 
     solver.compute(eMatX);
     xcg_x = solver.solveWithGuess(xcg_b, xcg_x);
     x_err = solver.error();
-
+    // cout<<"IP loop debug 2"<<endl;
     solver.compute(eMatY);
     ycg_x = solver.solveWithGuess(ycg_b, ycg_x);
     y_err = solver.error();
-
+    // cout<<"IP loop debug 3"<<endl;
     update_module(xcg_x, ycg_x);
+    // cout<<"IP loop debug 4"<<endl;
     update_pin_by_module();
+    // cout<<"IP loop debug 5"<<endl;
     update_net_by_pin();
-
+    // cout<<"IP loop debug 6"<<endl;
     if(isPlot && i % 5 == 0) {
       SaveCellPlotAsJPEG(string("FIP - Iter: ") + to_string(i), false,
                          string(dir_bnd) + string("/initPlace/initPlacement_") +
@@ -339,14 +341,18 @@ void update_pin_by_module(void) {
   FPOS pof;
   PIN *pin = NULL;
   MODULE *mdp = NULL;
-
+  // cout<<"update pin by module debug 0"<<endl;
   for(int i = 0; i < moduleCNT; i++) {
     mdp = &moduleInstance[i];
+    // cout<<"update pin by module debug 1"<<endl;
     for(int j = 0; j < mdp->pinCNTinObject; j++) {
       pof = mdp->pof[j];
       pin = mdp->pin[j];
-
+      // cout<<"update pin by module debug 2"<<endl;
       if(pin->moduleID != i || pin->pinIDinModule != j || pin->term == 1) {
+        cout<<"module ID = "<<pin->moduleID<<" i = "<<i<<endl;
+        cout<<"pin id = "<<pin->pinIDinModule<<" j = "<<j<<endl;
+        cout<<"pin->term = "<<pin->term<<endl;; 
         exit(1);
       }
 
@@ -357,6 +363,7 @@ void update_pin_by_module(void) {
       pin->X_MAX = 0;
       pin->Y_MIN = 0;
       pin->Y_MAX = 0;
+      // cout<<"update pin by module debug 3"<<endl;
     }
   }
 }

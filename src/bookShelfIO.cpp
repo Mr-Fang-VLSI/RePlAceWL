@@ -880,6 +880,7 @@ int read_nodes_3D(char *input) {
   moduleCNT -= terminalCNT;
   moduleInstance =
       (struct MODULE *)malloc(sizeof(struct MODULE) * moduleCNT);
+  // moduleInstance.resize(moduleCNT);
   terminalInstance =
       (struct TERM *)malloc(sizeof(struct TERM) * terminalCNT);
 

@@ -367,16 +367,21 @@ replace_external::init_replace() {
   init();
 
   ParseInput();
- 
+  ClusterModuleAndNet(16);
+  cout<<"init replace debug 0"<<endl;
   // update custom net-weights 
   if( hasCustomNetWeight ) {
     initCustomNetWeight(net_weight_file); 
   }
-
+  cout<<"init replace debug 1"<<endl;
   net_update_init();
+  cout<<"init replace debug 2"<<endl;
   init_tier();
+  cout<<"init replace debug 3"<<endl;
   build_data_struct(!isInitSeed);
+  cout<<"init replace debug 4"<<endl;
   update_instance_list();
+  cout<<"init replace debug 5"<<endl;
   if( write_bookshelf_mode ) {
     setup_before_opt();
     routeInst.Init();
@@ -387,8 +392,11 @@ replace_external::init_replace() {
 
 bool 
 replace_external::place_cell_init_place() {
+  cout<<"start IP"<<endl;
   initialPlacement_main();
+  cout<<"finish IP"<<endl;
   update_instance_list();
+  cout<<"update cells for IP"<<endl;
   return true;
 }
 

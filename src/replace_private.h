@@ -134,7 +134,8 @@ typedef double prec;
 #define DEN_GRAD_SCALE 1.0 /* 0.1 */ /* 0.5 */ /* 0.25 */ /* 0.125 */
 #define LAYER_ASSIGN_3DIC MIN_TIER_ORDER                  /* MAX_AREA_DIS_DIV */
 ///////////////////////////////////////////////////////////////////////////
-
+using std::vector;
+using std::string;
 
 struct POS;
 
@@ -196,6 +197,7 @@ struct POS {
   void SetXYProjection(POS a, POS b);
   void Dump(); 
   void Dump(std::string a);
+  bool equal(POS a);
 };
 
 
@@ -248,7 +250,9 @@ struct MODULE {
   FPOS half_size;
   FPOS center;
   FPOS *pof;
+  // std::vector<FPOS> pof;
   PIN **pin;
+  // std::vector<PIN*> pin;
   prec area;
   int idx;
   int netCNTinObject;
@@ -259,10 +263,15 @@ struct MODULE {
   int ovlp_flg;
   POS pmin_lg;
   POS pmax_lg;
-
+  std::string type;
+  POS containerCORD;
   const char* Name();
   MODULE();
   void Dump(std::string a);
+  void SetContainerCORD(std::vector<std::string>& clause);
+  void SetContainerType();
+  int containerID(int scale);
+  void cpy(MODULE* COPY);
 };
 
 
@@ -759,14 +768,20 @@ extern prec tileWidth, tileHeight;
 extern prec blockagePorosity;
 
 extern PIN *pinInstance;
+
 extern MODULE *moduleInstance;
+extern vector<MODULE> moduleInstance_origin;
+extern vector<PIN> pinInstance_origin;
+extern vector<NET> netInstance_origin;
 extern CELL *gcell_st;
 extern TERM *terminalInstance;
 
 extern NET *netInstance;
 extern HASH_MAP< std::string, int > netNameMap;
 
-
+extern int netCNT_origin;
+extern int moduleCNT_origin;
+extern int pinCNT_origin;
 // structure for *.scl
 extern ROW *row_st;
 extern int row_cnt;
@@ -948,7 +963,17 @@ void CallDetailPlace();
 void CallNtuPlacer3(const char *tier_dir, const char *tier_aux, const char *tier_pl);
 void CallNtuPlacer4h(const char *tier_dir, const char *tier_aux, const char *tier_pl);
 
-
+void BreakDownName(std::string Name,char breaksign,std::vector<std::string> &clause);
+void ClusterModuleAndNet(int scale);
+void testNameBreak();
+void CopyModuleInstance(MODULE* instance, std::vector<MODULE>& copy_vector);
+void CopyModule(MODULE* org,MODULE* copy);
+void CopyNetInstance(NET* instance, std::vector<NET>& copy_vector);
+void CopyNET(NET* org,NET* copy);
+void CopyPinInstance(NET* instance, std::vector<NET>& copy_vector);
+void CopyPIN(PIN* org,PIN* copy);
+void newPE(MODULE* org,POS CORD,int pincnt);
+bool checkPinConnectToOusideContainer(MODULE* org,int pinIDX,POS CORD);
 // 
 // Some utils for RePlAce.
 //

@@ -2,6 +2,7 @@
 #include "timing.h"
 #include <sstream>
 #include <fstream>
+#include <vector>
 
 using std::ofstream;
 using std::stringstream;
