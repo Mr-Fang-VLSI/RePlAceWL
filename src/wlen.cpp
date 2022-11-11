@@ -44,6 +44,7 @@
 #include <cstring>
 #include <iomanip>
 #include <omp.h>
+#include <replace_private.h>
 #include <iostream>
 #include <stdexcept>
 #include <unordered_map>
@@ -309,9 +310,48 @@ prec GetHpwl() {
     NET *curNet = &netInstance[i];
     if(curNet->pinCNTinObject <= 1)
       continue;
-
-    total_hpwl.x += curNet->max_x - curNet->min_x;
-    total_hpwl.y += curNet->max_y - curNet->min_y;
+    int samePEflag = 0;
+    POS CORD;
+    string type;
+    for(int j = 0;j < curNet->pinCNTinObject;j++)
+    {
+      if(j == 0 )
+      {
+        int moduleIDX = curNet->pin[j]->moduleID;
+        type = moduleInstance[moduleIDX].type;
+        if(type == "")
+        {
+          samePEflag = 1;
+          break;
+        }
+        else {
+          CORD.x = moduleInstance[moduleIDX].containerCORD.x;
+          CORD.y = moduleInstance[moduleIDX].containerCORD.y;
+        }
+      }
+      else {
+        int moduleIDX = curNet->pin[j]->moduleID;
+         
+        if(type!=moduleInstance[moduleIDX].type)
+        {
+          samePEflag = 1;
+          break;
+        }
+        else {
+          if(CORD.x != moduleInstance[moduleIDX].containerCORD.x||CORD.y != moduleInstance[moduleIDX].containerCORD.y)
+          {
+            samePEflag = 1;
+            break;
+          }
+        }
+      }
+    }
+    if(samePEflag ==1)
+    {
+      total_hpwl.x += curNet->max_x - curNet->min_x;
+      total_hpwl.y += curNet->max_y - curNet->min_y;
+    }
+    
 
     //// lutong
     // total_stnwl.x += curNet->stn_cof * (curNet->max_x - curNet->min_x) ;
@@ -1841,8 +1881,49 @@ pair< double, double > GetUnscaledHpwl() {
   NET *curNet = NULL;
   for(int i = 0; i < netCNT; i++) {
     curNet = &netInstance[i];
-    x += (curNet->max_x - curNet->min_x) * GetUnitX() / GetDefDbu();
-    y += (curNet->max_y - curNet->min_y) * GetUnitY() / GetDefDbu();
+    int samePEflag = 0;
+    POS CORD;
+    string type;
+    for(int j = 0;j < curNet->pinCNTinObject;j++)
+    {
+      if(j == 0 )
+      {
+        int moduleIDX = curNet->pin[j]->moduleID;
+        type = moduleInstance[moduleIDX].type;
+        if(type == "")
+        {
+          samePEflag = 1;
+          break;
+        }
+        else {
+          CORD.x = moduleInstance[moduleIDX].containerCORD.x;
+          CORD.y = moduleInstance[moduleIDX].containerCORD.y;
+        }
+      }
+      else {
+        int moduleIDX = curNet->pin[j]->moduleID;
+         
+        if(type!=moduleInstance[moduleIDX].type)
+        {
+          samePEflag = 1;
+          break;
+        }
+        else {
+          if(CORD.x != moduleInstance[moduleIDX].containerCORD.x||CORD.y != moduleInstance[moduleIDX].containerCORD.y)
+          {
+            samePEflag = 1;
+            break;
+          }
+        }
+      }
+    }
+    if(samePEflag == 1)
+    {
+      cout<<"outside net"<<endl;
+      x += (curNet->max_x - curNet->min_x) * GetUnitX() / GetDefDbu();
+      y += (curNet->max_y - curNet->min_y) * GetUnitY() / GetDefDbu();
+    }
+    
 
     if(curNet->max_x - curNet->min_x < 0) {
       cout << "NEGATIVE HPWL ERROR! " << curNet->Name() << " " << curNet->max_x

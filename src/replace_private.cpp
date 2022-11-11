@@ -517,6 +517,78 @@ void CopyModule(MODULE* org,MODULE* copy)
   copy->containerCORD.Set( org->containerCORD);
   
 }
+void CopyTerminalInstance(TERM* instance, std::vector<TERM>& copy_vector){
+  copy_vector.clear();
+  for(int i = 0;i <  moduleCNT;i++)
+  {
+    TERM* orgModule = &terminalInstance[i];
+    TERM newModule;
+    CopyTerminal(orgModule, &newModule);
+    copy_vector.push_back(newModule);
+  }
+}
+void CopyTerminal(TERM* org,TERM* copy)
+{
+  /*
+   FPOS pmin;
+  FPOS pmax;
+  prec area;
+  FPOS size;
+  FPOS center;
+  
+  */
+  copy->pmin.Set(org->pmin);
+  copy->pmax.Set(org->pmax);
+  copy->size.Set(org->size);
+  
+  copy->center.Set(org->center);
+  /*
+ FPOS *pof;
+  PIN **pin;
+  
+  */
+  
+  int pinCNT = org->pinCNTinObject;
+  copy->pinCNTinObject = pinCNT;
+  free(copy->pin);
+  free(copy->pof);
+  copy->pin = (struct PIN **)malloc(sizeof(struct PIN *) * pinCNT);
+  copy->pof = (struct FPOS*)malloc(sizeof(struct FPOS) * pinCNT);
+  for(int i = 0;i < org->pinCNTinObject;i++)
+  {
+    copy->pof[i].Set(org->pof[i]);
+    copy->pin[i] = org->pin[i];
+  }
+
+  /*
+  int idx;
+  int netCNTinObject;
+  int pinCNTinObject;
+  int IO;  // I -> 0; O -> 1
+           //    int tier;
+  bool isTerminalNI;
+  prec PL_area;
+  const char* Name();
+
+  TERM();
+  void Dump();
+  */
+  copy->PL_area = org->PL_area;
+  copy->idx = org->idx;
+  copy->netCNTinObject = org->netCNTinObject;
+  copy->IO = org->IO;
+  copy->isTerminalNI = org->isTerminalNI;
+
+  
+ 
+  
+  
+  
+  
+  
+  
+  
+}
 void newPE(MODULE* org,POS CORD,int pincnt)
 {
   /*
@@ -712,12 +784,171 @@ void ClusterModuleAndNet(int scale){
       curContainer->pin[j]->term = 0;
       curContainer->pof[j].SetZero();
     }
-    
+    if(i<scale*scale)
+    {
+      curContainer->type = "PE";
+    }
+    else {
+     curContainer->type = "buffer";
+    }
 
   }
 
 }
 
+
+void ClusterModuleAndNet_testTerminal(int scale){
+  cout<<"start cluster"<<endl;
+  MODULE* module;
+  int clusterModuleCNT = scale*(scale+1);
+  int j = clusterModuleCNT;
+  int PEpinCNT= 0;
+  int BuffpinCNT = 0;
+  for(int i = 0;i < moduleCNT;i++)
+  {
+    
+    module = &moduleInstance[i];
+    
+    
+    
+    module->SetContainerType();
+    if(module->type == "")
+    {
+      clusterModuleCNT++;
+    }
+    if(module->type =="PE"&& module->containerCORD.x == 0&&module->containerCORD.y == 0)
+    {
+      PEpinCNT +=  module->pinCNTinObject;
+      
+    }
+    if(module->type =="buffer"&& module->containerCORD.x == 0)
+    {
+      BuffpinCNT +=  module->pinCNTinObject;
+      
+    }
+    
+  }
+  
+  cout<<" cluster debug 0"<<endl;
+  CopyPinInstance(pinInstance,pinInstance_origin);
+
+  CopyNetInstance(netInstance,netInstance_origin);
+  cout<<"start copy module instance"<<endl;
+  CopyModuleInstance(moduleInstance,moduleInstance_origin);
+  CopyTerminalInstance(terminalInstance,terminalInstance_origin);
+  moduleCNT_origin = moduleCNT;
+  pinCNT_origin = pinCNT;
+  netCNT_origin = netCNT;
+
+  cout<<"finish copy module instance"<<endl;
+  
+  //将所有非
+  // free(moduleInstance);
+  // moduleInstance = (struct MODULE*)malloc(sizeof(struct MODULE) * clusterModuleCNT);
+  MODULE* curModule;
+  int curModuleIDX = scale*(scale+1);
+  int PENum = scale*(scale);
+  for(int i = 0;i <  moduleCNT_origin;i++)
+  {
+    curModule = &moduleInstance_origin[i];
+    if(curModule->type == "")
+    {
+      CopyModule(curModule, &moduleInstance[curModuleIDX]);
+      moduleInstance[curModuleIDX].idx = curModuleIDX;
+      for(int j = 0;j < curModule->pinCNTinObject;j++)
+      {
+        moduleInstance[curModuleIDX].pin[j]->moduleID = curModuleIDX;
+        if(curModuleIDX == 272)
+        {
+          cout<<"pin module ID = "<<moduleInstance[curModuleIDX].pin[j]->moduleID<<endl;
+          cout<<"pin id"<<moduleInstance[curModuleIDX].pin[j]->pinIDinModule<<endl;
+        }
+      }
+      
+      curModuleIDX++;
+    }
+  }
+  cout<<"clusterIDX == "<<clusterModuleCNT<<endl;
+  cout<<"curModuleIDX == "<<curModuleIDX<<endl;
+  moduleCNT = clusterModuleCNT;
+  // free(curModule);
+  
+  // 统计 module 
+  // MODULE* curModule;
+  std::vector<std::vector<int>> moduleToContainer;
+  for(int i = 0;i < scale*(scale+1);i++)
+  {
+    std::vector<int> temp;
+    temp.clear();
+    moduleToContainer.push_back(temp);
+  }
+  for(int i = 0;i < moduleCNT_origin;i++)
+  {
+    curModule = &moduleInstance_origin[i];
+    if(curModule->type!="")
+    {
+      int ContainerID = curModule->containerID(scale);
+      moduleToContainer[ContainerID].push_back(i);
+    }
+    // int ContainerID = curModule->containerID(scale);
+    // moduleToContainer[ContainerID].push_back(i);
+  }
+  //establish PE
+  std::vector<PIN*> containerPinList;
+  for(int i = 0;i <  scale*(scale+1);i++)
+  {
+    //get # of pin(连解当前PE之外的 pin)
+    TERM* curContainer = &terminalInstance[i];
+    //get pin list
+    containerPinList.clear();
+    int area = 0;
+    for(int j = 0;j < moduleToContainer[i].size();j++)
+    {
+      int moduleIDX = moduleToContainer[i][j];
+      curModule = &moduleInstance_origin[moduleIDX];
+      area +=  curModule->area;
+      for(int k = 0;k < curModule->pinCNTinObject;k++)
+      {
+        containerPinList.push_back(curModule->pin[k]);
+      }
+    }
+    free(curContainer->pin);
+    free(curContainer->pof);
+    // cout<<"free old pin list in container"<<endl;
+    curContainer->pin = (struct PIN**)malloc(sizeof(struct PIN*) * containerPinList.size());
+    curContainer->pof = (struct FPOS*)malloc(sizeof(struct FPOS) * containerPinList.size());
+    curContainer->pinCNTinObject = containerPinList.size();
+    //set pof
+    curContainer->area = area;
+    curContainer->size.x = std::sqrt(area);
+    curContainer->size.y = curContainer->size.x;
+    // curContainer->half_size.x = curContainer->size.x/2;
+    // curContainer->half_size.y = curContainer->size.x/2;
+    curModule->pmin.SetZero();
+    curModule->center.SetAdd(curModule->pmin, curModule->half_size);
+
+    // set pinMax coordi
+    curModule->pmax.SetAdd(curModule->pmin, curModule->size);
+   
+    for(int j = 0;j < containerPinList.size();j++)
+    {
+      curContainer->pin[j] = containerPinList[j];
+      curContainer->pin[j]->moduleID = i;
+      curContainer->pin[j]->pinIDinModule = j;
+      curContainer->pin[j]->term = 0;
+      curContainer->pof[j].SetZero();
+    }
+    if(i<scale*scale)
+    {
+      curContainer->type = "PE";
+    }
+    else {
+     curContainer->type = "buffer";
+    }
+
+  }
+
+}
 void MODULE::cpy(MODULE* COPY)
 {
   area = COPY->area;

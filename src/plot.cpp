@@ -302,6 +302,13 @@ void DrawModule(CImgObj &img, const unsigned char color[], float opacity) {
         cColor[j] = color[j];
       }
     }
+    if(curModule->type=="buffer")
+    {
+      cColor[0] = 0;
+      cColor[1] = 255;
+      cColor[2] = 0;
+      cout<<"plot buffer"<<endl;
+    }
     img.draw_rectangle(x1, y1, x3, y3, cColor, opacity);
   }
 }

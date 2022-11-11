@@ -296,6 +296,7 @@ struct TERM {
   bool isTerminalNI;
   prec PL_area;
   const char* Name();
+  string type;
 
   TERM();
   void Dump();
@@ -773,6 +774,7 @@ extern MODULE *moduleInstance;
 extern vector<MODULE> moduleInstance_origin;
 extern vector<PIN> pinInstance_origin;
 extern vector<NET> netInstance_origin;
+extern vector<TERM> terminalInstance_origin;
 extern CELL *gcell_st;
 extern TERM *terminalInstance;
 
@@ -965,10 +967,14 @@ void CallNtuPlacer4h(const char *tier_dir, const char *tier_aux, const char *tie
 
 void BreakDownName(std::string Name,char breaksign,std::vector<std::string> &clause);
 void ClusterModuleAndNet(int scale);
+void ClusterModuleAndNet_testTerminal(int scale);
 void testNameBreak();
 void CopyModuleInstance(MODULE* instance, std::vector<MODULE>& copy_vector);
+void CopyTerminalInstance(TERM* instance, std::vector<TERM>& copy_vector);
 void CopyModule(MODULE* org,MODULE* copy);
+void CopyTerminal(TERM* org,TERM* copy);
 void CopyNetInstance(NET* instance, std::vector<NET>& copy_vector);
+
 void CopyNET(NET* org,NET* copy);
 void CopyPinInstance(NET* instance, std::vector<NET>& copy_vector);
 void CopyPIN(PIN* org,PIN* copy);

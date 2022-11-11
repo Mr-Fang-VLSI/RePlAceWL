@@ -126,6 +126,7 @@ vector<FPOS>linearFuncX;
 vector<FPOS>linearFuncY;
 
 TERM *terminalInstance;
+vector<TERM> terminalInstance_origin;
 NET *netInstance;
 vector<NET> netInstance_origin;
 int netCNT_origin;
