@@ -47,6 +47,7 @@
 #include <cstring>
 #include <ctime>
 #include <chrono>
+#include <iostream>
 
 #include "bookShelfIO.h"
 #include "bin.h"
@@ -580,7 +581,16 @@ int myNesterov::DoNesterovOptimization(Timing::Timing &TimingInst) {
     // We can probably remove the following cell_update.
     if(constraintDrivenCMD)
       cell_update(y_st, N);
-
+    
+    //detect overlap
+    cell_update(y_dst, N);
+    detectoverlap();
+    // if(i!=0){
+    //   traceDensityGradient();
+    // }
+      
+    
+    
     it = &iter_st[i + 1];
     init_iter(it, i + 1);
     FILLER_PLACE = 0;
@@ -1058,8 +1068,11 @@ void getCostFuncGradient2(struct FPOS *dst, struct FPOS *wdst,
         // }
         
         if(STAGE == mGP2D) {
+          // cout<<"mGP2D" <<endl;
           if(constraintDrivenCMD == false) {
             potn_grad_2D(i, &pgrad);
+            // cout<<"constraintDrivenCMD == false" <<endl;
+            // exit(0);
           }
           else if(constraintDrivenCMD == true) {
             // if (lambda2CMD == false) {
@@ -1068,6 +1081,8 @@ void getCostFuncGradient2(struct FPOS *dst, struct FPOS *wdst,
             potn_grad_2D(i, &pgrad);
             potn_grad_2D_local(i, &pgradl, &cellLambdaArr[i]);
             //}
+            // cout<<"constraintDrivenCMD == true" <<endl;
+            // exit(0);
           }
         }
         else if(STAGE == cGP2D) {
@@ -1084,7 +1099,12 @@ void getCostFuncGradient2(struct FPOS *dst, struct FPOS *wdst,
           }
         }
       }
-
+      if(isCellOverlappedWithMacro[i] == true) {
+        // cout<<"cell "<<i<<" is overlapped with macro"<<endl;
+        // cout<<"pgrad "<<pgrad.x<<" "<<pgrad.y<<endl;
+        // cout<<"pgradl "<<pgradl.x<<" "<<pgradl.y<<endl;
+        // exit(0);
+      }
       wdst[i] = wgrad;
       pdst[i] = pgrad;
 
@@ -1499,6 +1519,7 @@ void myNesterov::UpdateNesterovIter(int iter, struct ITER *it,
   if((iter == 1 || iter % 10 == 0) && (isPlot || plotCellCMD)) {
     cell_update(x_st, N);
 
+    
     // For circuit viewer
     //        SavePlot(string("Nesterov - Iter: " + std::to_string(iter)),
     //        true);

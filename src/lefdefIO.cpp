@@ -54,6 +54,7 @@
 #include "timingSta.h"
 #include <iostream>
 #include <boost/functional/hash.hpp>
+#include <ostream>
 
 using namespace std;
 using Replace::NetInfo;
@@ -898,7 +899,8 @@ void GenerateModuleTerminal(Replace::Circuit& __ckt) {
 
     terminalCNT++;
   }
-
+  // cout<<"terminalCNT = "<<terminalCNT<<endl;
+  // exit(0);
   // for pin
   for(auto& curPin : __ckt.defPinStor) {
     curTerm = &terminalInstance[terminalCNT];

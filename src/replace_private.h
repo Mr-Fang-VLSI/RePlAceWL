@@ -296,8 +296,8 @@ struct TERM {
   bool isTerminalNI;
   prec PL_area;
   const char* Name();
-  string type;
-
+  // string type = "";
+  // POS containerCORD;
   TERM();
   void Dump();
 };
@@ -967,12 +967,20 @@ void CallNtuPlacer4h(const char *tier_dir, const char *tier_aux, const char *tie
 
 void BreakDownName(std::string Name,char breaksign,std::vector<std::string> &clause);
 void ClusterModuleAndNet(int scale);
+void ClusterModuleAndNetForBufferToContainerTerm(int scale);
+void ClusterModuleAndNetForBufferAsMacro(int scale);
 void ClusterModuleAndNet_testTerminal(int scale);
+
+void ClusterModuleAndNetToContainerTerm(int scale);
+
+void CopyModule2Term(MODULE* curModule, TERM* copy);
+
 void testNameBreak();
 void CopyModuleInstance(MODULE* instance, std::vector<MODULE>& copy_vector);
 void CopyTerminalInstance(TERM* instance, std::vector<TERM>& copy_vector);
 void CopyModule(MODULE* org,MODULE* copy);
 void CopyTerminal(TERM* org,TERM* copy);
+void Copy2NewTerminal(TERM* org,TERM* copy);
 void CopyNetInstance(NET* instance, std::vector<NET>& copy_vector);
 
 void CopyNET(NET* org,NET* copy);
@@ -980,6 +988,11 @@ void CopyPinInstance(NET* instance, std::vector<NET>& copy_vector);
 void CopyPIN(PIN* org,PIN* copy);
 void newPE(MODULE* org,POS CORD,int pincnt);
 bool checkPinConnectToOusideContainer(MODULE* org,int pinIDX,POS CORD);
+void combineNetInstance(NET* instance,std::vector<NET>& copy_vector,int scale);
+bool isNetConnectingContainerAndDust(NET* curNet);
+void addToPinInstance(int pinid,PIN* curPin);
+void updateContainerNetWeight(std::map<POS, int>& _map,int id1,int id2);
+void addWeightedNet(int netid,int pinid1,int pinid2,int weight,POS match);
 // 
 // Some utils for RePlAce.
 //

@@ -268,12 +268,18 @@ void init_tier(void) {
     tier->pl_area = 0;
     tier->temp_mac_area = 0;
     tier->max_mac = NULL;
-
+    tier->pmax.x *= 3.0;
+    tier->pmax.y *= 3.0;
     for(int j = 0; j < place_st_cnt; j++) {
       pl = &place_st[j];
+      pl->end.x*=3.0;
+      pl->end.y*=3.0;
+      
       pl_area = pGetCommonAreaXY(pl->org, pl->end, tier->pmin, tier->pmax);
       tier->pl_area += pl_area;
+      cout<<"# of tier: "<<i<<", pl_area: "<<pl_area<<endl;
     }
+    // exit(1);
     tier->virt_area = tier->area - tier->pl_area;
 
     // this terminal Area calculation can be Wrong!!!

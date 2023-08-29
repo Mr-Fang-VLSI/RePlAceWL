@@ -92,7 +92,7 @@ void initGlobalVars() {
   plotMacroCMD = false;         // bool
   plotDensityCMD = false;       // bool
   plotFieldCMD = false;         // bool
-  constraintDrivenCMD = false;  // bool
+  constraintDrivenCMD = true;  // bool
   isRoutability = false;       // bool
   stnCMD = false;               // lutong
   lambda2CMD = false;           // bool

@@ -256,7 +256,7 @@ void bin_init_2D(int STAGE) {
   for(int z = 0; z < numLayer; z++) {
     TIER *tier = &tier_st[z];
     prec avg_modu_area = 1.0 * tier->modu_area / tier->modu_cnt;
-    prec ideal_bin_area = avg_modu_area / target_cell_den;
+    prec ideal_bin_area = avg_modu_area / target_cell_den*3.0;
     int ideal_bin_cnt = INT_CONVERT(tier->area / ideal_bin_area);
 
     bool isUpdate = false;

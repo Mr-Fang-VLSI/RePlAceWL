@@ -402,7 +402,7 @@ void sa_init_top(void) {
 
 //    plot("S3-LG1-macro-gp", 0, 1.0, 1);
 //  }
-
+  
   sa_mac_leg_init();
 
   tot_mac_hpwl = net_update_hpwl_mac();

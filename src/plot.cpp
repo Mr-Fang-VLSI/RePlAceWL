@@ -39,6 +39,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include "plot.h"
+#include <replace_private.h>
 #include "bin.h"
 #include "replace_private.h"
 #include "opt.h"
@@ -227,12 +228,12 @@ void DrawGcell(CImgObj &img, const unsigned char fillerColor[],
                const unsigned char macroColor[], float opacity) {
   for(int i = 0; i < gcell_cnt; i++) {
     CELL *curGCell = &gcell_st[i];
+    MODULE *curModule = &moduleInstance[i];
+    curGCell->pmin.x = curGCell->center.x - 0.5 * curGCell->size.x  ;
+    curGCell->pmax.x = curGCell->center.x + 0.5 * curGCell->size.x ;
 
-    curGCell->pmin.x = curGCell->center.x - 0.5 * curGCell->size.x;
-    curGCell->pmax.x = curGCell->center.x + 0.5 * curGCell->size.x;
-
-    curGCell->pmin.y = curGCell->center.y - 0.5 * curGCell->size.y;
-    curGCell->pmax.y = curGCell->center.y + 0.5 * curGCell->size.y;
+    curGCell->pmin.y = curGCell->center.y - 0.5 * curGCell->size.y ;
+    curGCell->pmax.y = curGCell->center.y + 0.5 * curGCell->size.y ;
 
     int x1 = pe.GetX(curGCell->pmin);
     int x3 = pe.GetX(curGCell->pmax);
@@ -263,6 +264,12 @@ void DrawGcell(CImgObj &img, const unsigned char fillerColor[],
         }
       } 
     }
+    if(curModule->type == "PE"){
+      
+      color[0] = curModule->containerID(8)%255;
+      color[1] = 0;
+      color[2] = 0;
+    }
 //    cout << "color: " << (int)color[0] << " " << (int)color[1] << " " << (int)color[2] << endl;
     img.draw_rectangle(x1, y1, x3, y3, color, opacity);
 
@@ -273,9 +280,46 @@ void DrawGcell(CImgObj &img, const unsigned char fillerColor[],
       // 20);
     }
   }
+
+  for(int i = 0;i <16;i++){
+    TERM *curGCell = &terminalInstance[i];
+
+    curGCell->pmin.x = curGCell->center.x - 0.5 * curGCell->size.x  ;
+    curGCell->pmax.x = curGCell->center.x + 0.5 * curGCell->size.x ;
+
+    curGCell->pmin.y = curGCell->center.y - 0.5 * curGCell->size.y + 0.3*place.end.y;
+    curGCell->pmax.y = curGCell->center.y + 0.5 * curGCell->size.y + 0.3*place.end.y;
+
+    int x1 = pe.GetX(curGCell->pmin);
+    int x3 = pe.GetX(curGCell->pmax);
+    int y1 = pe.GetY(curGCell->pmin);
+    int y3 = pe.GetY(curGCell->pmax);
+
+    // skip drawing for FillerCell
+    
+    // Color settings for Macro / StdCells
+    unsigned char color[3] = {0, };
+    
+    
+      // if( pe.hasCellColor ) {
+      //   color[0] = pe.colors[i].r();
+      //   color[1] = pe.colors[i].g();
+      //   color[2] = pe.colors[i].b();
+      // }
+      // else {
+      //   for(int j=0; j<3; j++) {
+      //     color[j] = cellColor[j];
+      //   }
+      // } 
+    
+//    cout << "color: " << (int)color[0] << " " << (int)color[1] << " " << (int)color[2] << endl;
+    img.draw_rectangle(x1, y1, x3, y3, black, opacity);
+  }
 }
 
 void DrawModule(CImgObj &img, const unsigned char color[], float opacity) {
+  cout<<"start draw module"<<endl;
+  // exit(0);
   for(int i = 0; i < moduleCNT; i++) {
     MODULE *curModule = &moduleInstance[i];
 
@@ -302,15 +346,58 @@ void DrawModule(CImgObj &img, const unsigned char color[], float opacity) {
         cColor[j] = color[j];
       }
     }
-    if(curModule->type=="buffer")
+    if(curModule->type=="PE")
     {
       cColor[0] = 0;
-      cColor[1] = 255;
+      cColor[1] = 120;
       cColor[2] = 0;
-      cout<<"plot buffer"<<endl;
+      // cout<<"plot PE"<<endl;
+    }
+    if(curModule->type=="IB")
+    {
+      cColor[0] = 0;
+      cColor[1] = 0;
+      cColor[2] = 120;
+      cout<<"plot IB"<<endl;
+    }
+    if(curModule->type=="WB")
+    {
+      cColor[0] = 120;
+      cColor[1] = 0;
+      cColor[2] = 0;
+      cout<<"plot WB"<<endl;
+    }
+    if(curModule->type=="")
+    {
+      continue;
     }
     img.draw_rectangle(x1, y1, x3, y3, cColor, opacity);
   }
+
+  // for(int i = 0; i < 16; i++) {
+  //   TERM *curModule = &terminalInstance[i];
+
+  //   // update pmin & pmax
+  //   curModule->pmin.x = curModule->center.x -   curModule->size.x/2.0;
+  //   curModule->pmax.x = curModule->center.x +  curModule->size.x/2.0;
+
+  //   curModule->pmin.y = curModule->center.y -  curModule->size.y/2.0;
+  //   curModule->pmax.y = curModule->center.y +  curModule->size.y/2.0;
+
+  //   int x1 = pe.GetX(curModule->pmin);
+  //   int x3 = pe.GetX(curModule->pmax);
+  //   int y1 = pe.GetY(curModule->pmin);
+  //   int y3 = pe.GetY(curModule->pmax);
+
+  //   unsigned char cColor[3] = {0, };
+    
+  //   cColor[0] = 0;
+  //   cColor[1] = 255;
+  //   cColor[2] = 0;
+  //   cout<<"plot buffer"<<endl;
+   
+  //   img.draw_rectangle(x1, y1, x3, y3, cColor, opacity);
+  // }
 }
 
 void DrawBinDensity(CImgObj &img, float opacity) {
@@ -544,7 +631,7 @@ void SaveCellPlotAsJPEG(string imgName, bool isGCell, string imgPosition) {
       int y3 = GetY( curRow->pmax.y, unitY, origHeight ) + yMargin;
       img.draw_rectangle( x1, y1, x3, y3, black, 0.025 );
   }*/
-
+  // cout<<"isGCell: "<<isGCell<<endl;
   SaveCellPlot(img, isGCell);
 
   /*

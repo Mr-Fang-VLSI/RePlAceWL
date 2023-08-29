@@ -1,4 +1,5 @@
 #include "replace_external.h"
+#include <replace_private.h>
 #include <fstream>
 #include <iostream>
 #include <ostream>
@@ -205,6 +206,13 @@ replace_external::set_output_experiment_name(const char* output) {
   experimentCMD = output;
 }
 
+void
+replace_external::set_constraintDrivenCMD(bool constraintDrivenCMD) {
+  constraintDrivenCMD = true;
+  cout<<"constraintDrivenCMD: "<<constraintDrivenCMD<<endl;
+  // exit(0);
+}
+
 
 void
 replace_external::set_timing_driven(bool is_true) {
@@ -367,7 +375,17 @@ replace_external::init_replace() {
   init();
 
   ParseInput();
-  ClusterModuleAndNet(16);
+  // ClusterModuleAndNet(16);
+  // ClusterModuleAndNetToContainerTerm(16);
+  // ClusterModuleAndNetForBufferToContainerTerm(16);
+  // ClusterModuleAndNetForBufferAsMacro(8);
+  // exit(0);
+  // ClusterModuleAndNetForBufferAsMacro(16);
+  // place.end.x *= 3.0;
+  // place.end.y *= 3.0;
+  // gmax.x *= 3.0;
+  // gmax.y *= 3.0;
+  
   cout<<"init replace debug 0"<<endl;
   // update custom net-weights 
   if( hasCustomNetWeight ) {
@@ -387,6 +405,11 @@ replace_external::init_replace() {
     routeInst.Init();
     WriteBookshelf();  
   }
+  // doGreedyPlace(16);
+  // doSchemPlace_TermContainer(16);
+  // doDeterPlace(16);
+  // doBoundingBoxPlaceForBuffer(16);
+  // placementMacroCNT = 1;
   return true;
 }
 
@@ -408,19 +431,36 @@ replace_external::place_cell_nesterov_place() {
 
   setup_before_opt();
   if( placementMacroCNT > 0 ) {
+    cout<<"start macro placement"<<endl;
+    // exit(0);
     mGP2DglobalPlacement_main();
+    // macroLegalization_main();
   }
   else {
     cGP2DglobalPlacement_main();
   }
   update_instance_list();
+  
+
+  time_end(&time);
+  cout<<"nesterov placement runtime: "<<time<<endl;
+  // roughLegalization(16);
+  // stitchingLegalization(16);
   if( isPlot ) {
     SaveCellPlotAsJPEG("Global Placement Result", false,
         string(dir_bnd) + string("/globalPlace"));
   }
-
-  time_end(&time);
-  cout<<"nesterov placement runtime: "<<time<<endl;
+  if( write_bookshelf_mode ) {
+    setup_before_opt();
+    routeInst.Init();
+    WriteBookshelf();  
+    cout<<"write into bookshelf after global placement"<<endl;
+  }
+  // detailPlacer = NTUplace3;
+  // onlyLG_CMD = false;
+  // CallDetailPlace();
+  // cout<<"detailed placed"<<endl;
+  // plot(16);
   return true;
 }
 

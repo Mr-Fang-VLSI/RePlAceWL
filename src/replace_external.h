@@ -57,6 +57,8 @@ public:
   void set_max_net_weight(double net_weight_max);
   void set_net_weight_scale(double net_weight_scale);
 
+  void set_constraintDrivenCMD(bool constraintDrivenCMD);
+
   void set_routability_driven(bool mode);
 
   void set_fastWL(bool fast);

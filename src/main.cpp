@@ -390,7 +390,7 @@ bool plotCellCMD;
 bool plotMacroCMD;
 bool plotDensityCMD;
 bool plotFieldCMD;
-bool constraintDrivenCMD;
+bool constraintDrivenCMD = true;
 bool isRoutability;
 bool stnCMD;  // lutong
 bool lambda2CMD;
@@ -405,6 +405,8 @@ bool isFastMode;
 FPOS FASTWL_TOT;
 FPOS FASTWL_HALF;
 FPOS FASTWL_INTERVAL;
+
+std::vector<bool> isCellOverlappedWithMacro;
 ///////////////////////////////////////////////////////////
 
 Tcl_Interp* _interp;
@@ -893,6 +895,10 @@ void initialPlacement_main() {
   STAGE = INITIAL_PLACE;
   cout<<"IP debug 0"<<endl;
   initial_placement();
+  for(int i = 0;i<moduleCNT;i++){
+    moduleInstance[i].center.x += terminalInstance[1].size.x;
+    moduleInstance[i].center.y += terminalInstance[1].size.y;
+  }
   cout<<"IP debug 1"<<endl;
   UpdateNetAndGetHpwl();
   cout<<"IP debug 2"<<endl;

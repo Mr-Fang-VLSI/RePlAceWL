@@ -78,6 +78,8 @@ extern vector<FPOS>linearFuncX;
 extern vector<FPOS>linearFuncY;
 extern prec runtime_2pinnet;
 extern prec netupdate_runtime_pinnet;
+
+extern vector<bool> isCellOverlappedWithMacro;
 struct EXP_ST {
   prec x;
   prec val;
@@ -187,6 +189,11 @@ enum { LSE, WA };
 
 std::pair<double, double> GetUnscaledHpwl();
 void PrintUnscaledHpwl(std::string mode);
+
+void initOverlapInfo();
+void detectoverlap();//update isCellOverlappedWithMacro vector
+bool isCellOverlapped(int cell_idx);//return true if the cell is overlapped with a macro
+
 
 
 #define WLEN_MODEL WA /* LSE */ /* NTU */

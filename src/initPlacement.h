@@ -40,9 +40,11 @@
 
 #ifndef __PL_IP__
 #define __PL_IP__
-
+#include <vector>
 #include <Eigen/SparseCore>
 #include "replace_private.h"
+#include <fstream>
+#include <random>
 
 using Eigen::VectorXf;
 typedef Eigen::SparseMatrix< prec, Eigen::RowMajor > SMatrix;
@@ -57,4 +59,51 @@ void update_module(VectorXf &xcg_x, VectorXf &ycg_x);
 void build_data_struct(bool initCoordi = true);
 void update_pin_by_module();
 
+
+///////////////////////////////////////////
+// std::vector<int> _Grid;
+// std::vector<MODULE> _Containers;
+// std::vector<PIN> _TermPins;
+// std::vector<NET> _Nets;
+
+void doGreedyPlace(int scale);
+void doBoundingBoxPlaceForBuffer(int scale);
+void doSchemPlace_TermContainer(int scale);
+void doDeterPlace(int scale);
+void setupGreedyPlace(FPOS& gridSize,POS& gridNum,std::vector<int>& Grid);
+void setupGrid(FPOS& gridSize,POS& gridNum,std::vector<int>& Grid);
+void setupContainers();
+void setupTermPins();
+void setupNets();
+void generateSearchOrder(std::vector<int> &order,int scale);
+int findBestBin(MODULE& curContainer,vector<int>& order,int scale,std::vector<int> Grid,FPOS gridSize);
+int findBestBin(TERM& curContainer,vector<int>& order,int scale,std::vector<int> Grid,FPOS gridSize);
+void findActiveNet(MODULE& curContainer,vector<int>& order,vector<int>& activeNetId,int scale);
+void placeContainerToBin(MODULE& curContainer,int binId,FPOS location,vector<int> &Grid);
+void placeContainerToBin(TERM& curContainer,int binId,FPOS location,vector<int> &Grid);
+prec getHpwl(MODULE& curContainer,std::vector<int> activeNets,FPOS location);
+FPOS getHpwl(NET& curNet);
+void findCandidate(vector<int>&Grid,FPOS LL,FPOS UR,vector<FPOS> &candidates,vector<int>&candidateBinId,FPOS gridSize);
+void findCandidate(MODULE& curModule,vector<int> &order,vector<FPOS> &candidates,int scale);
+void findBoundingBox(vector<int> &activeNetId,FPOS& LL,FPOS& UR,MODULE& curContainer,vector<int> Order);
+void plot(int scale);
+void plotTerm(int scale);
+void drawRectangle(FPOS LL,FPOS UR,int colors,string filename, int objectID,string label);
+
+void printDebugInfo(string funcName,int debugIndex,string info);
+
+void fillPinCordList(vector<prec> pinXlist,vector<prec> pinYlist,vector<int> &Nets,MODULE& curModule,vector<int>& order);
+void move2nonOverlap(MODULE& curModule,FPOS fp,FPOS direction,vector<int> &order,vector<FPOS> &candidates);
+int lookaheadDetermine(MODULE& curModule,MODULE& nextModule,vector<int> order,vector<FPOS>& candidates,int scale);
+void placeContainer(MODULE &curContainer, FPOS location);
+void placeContainer(TERM &curContainer, FPOS location);
+
+void findIOCenter(FPOS &ioCenter);
+void findPEArraySize(FPOS &peArraySize);
+void findBufferSize(FPOS &bufferSize);
+
+void roughLegalization(int PENum);
+// void placeContainer_Term(TERM &curContainer, FPOS location);
+void stitchingLegalization(int PENum);
+// FPOS spaceCenter;
 #endif

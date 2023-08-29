@@ -236,7 +236,7 @@ void transform_3d(FPOS *tier_min, FPOS *tier_max, int tier_row_cnt) {
     tier->term_cnt = 0;
 
     if(terminalCNT > 0) {
-      tier->term_st = (TERM **)malloc(sizeof(TERM *) * terminalCNT);
+      tier->term_st = (TERM **)malloc(sizeof(TERM *) * (terminalCNT+16*17));
     }
     else {
       tier->term_st = NULL;

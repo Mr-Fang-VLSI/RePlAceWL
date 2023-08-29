@@ -305,7 +305,9 @@ FPOS get_net_wlen_lse(NET *net) {
 prec GetHpwl() {
   total_hpwl.SetZero();
   total_stnwl.SetZero();
-
+  FPOS buffer_hpwl;
+  FPOS bufferpe_hpwl;
+  FPOS pe_hpwl;
   for(int i = 0; i < netCNT; i++) {
     NET *curNet = &netInstance[i];
     if(curNet->pinCNTinObject <= 1)
@@ -313,43 +315,88 @@ prec GetHpwl() {
     int samePEflag = 0;
     POS CORD;
     string type;
+    int connectType = 0;//0:pe,1:pe+pe,2:buffer+PE,3:buffer+buffer
+    int isPE = 0;
+    int isBuffer = 0;
     for(int j = 0;j < curNet->pinCNTinObject;j++)
     {
       if(j == 0 )
       {
         int moduleIDX = curNet->pin[j]->moduleID;
         type = moduleInstance[moduleIDX].type;
-        if(type == "")
+        if(type != "buffer" && curNet->pin[j]->term==0)
         {
           samePEflag = 1;
+          
           break;
         }
         else {
+          isBuffer = 1;
+          connectType = 0;
           CORD.x = moduleInstance[moduleIDX].containerCORD.x;
           CORD.y = moduleInstance[moduleIDX].containerCORD.y;
         }
       }
       else {
         int moduleIDX = curNet->pin[j]->moduleID;
-         
+         if(moduleInstance[moduleIDX].type == "buffer"|| curNet->pin[j]->term==1)
+          {
+            isBuffer = 1;
+           
+          }
+          else {
+            isPE = 1;
+            
+          }
         if(type!=moduleInstance[moduleIDX].type)
         {
+          
           samePEflag = 1;
+          
           break;
         }
         else {
           if(CORD.x != moduleInstance[moduleIDX].containerCORD.x||CORD.y != moduleInstance[moduleIDX].containerCORD.y)
           {
             samePEflag = 1;
+            connectType = 2;
             break;
           }
         }
       }
     }
+
+    if(isBuffer == 1 && isPE == 1)
+    {
+      connectType = 2;
+    }
+    if(isBuffer == 1 && isPE == 0)
+    {
+      connectType = 3;
+    }
+    if(isBuffer == 0 && isPE == 1)
+    {
+      connectType = 1;
+    }
     if(samePEflag ==1)
     {
       total_hpwl.x += curNet->max_x - curNet->min_x;
       total_hpwl.y += curNet->max_y - curNet->min_y;
+      if(connectType <=1)
+      {
+        pe_hpwl.x += curNet->max_x - curNet->min_x;
+        pe_hpwl.y += curNet->max_y - curNet->min_y;
+      }
+      else if(connectType == 2)
+      {
+        bufferpe_hpwl.x += curNet->max_x - curNet->min_x;
+        bufferpe_hpwl.y += curNet->max_y - curNet->min_y;
+      }
+      else if(connectType == 3)
+      {
+        buffer_hpwl.x += curNet->max_x - curNet->min_x;
+        buffer_hpwl.y += curNet->max_y - curNet->min_y;
+      }
     }
     
 
@@ -357,7 +404,9 @@ prec GetHpwl() {
     // total_stnwl.x += curNet->stn_cof * (curNet->max_x - curNet->min_x) ;
     // total_stnwl.y += curNet->stn_cof * (curNet->max_y - curNet->min_y) ;
   }
-
+  // cout<<"pe_hpwl.x: "<<pe_hpwl.x<<" pe_hpwl.y: "<<pe_hpwl.y<<endl;
+  // cout<<"bufferpe_hpwl.x: "<<bufferpe_hpwl.x<<" bufferpe_hpwl.y: "<<bufferpe_hpwl.y<<endl;
+  // cout<<"buffer_hpwl.x: "<<buffer_hpwl.x<<" buffer_hpwl.y: "<<buffer_hpwl.y<<endl;
   return total_hpwl.x + total_hpwl.y;
 }
 
@@ -893,6 +942,8 @@ void net_update_init(void) {
       }
     }
   }
+
+  initOverlapInfo();
 }
 void fastWL_init(int controlNum)  // controlNum must be odd
 {
@@ -1919,7 +1970,7 @@ pair< double, double > GetUnscaledHpwl() {
     }
     if(samePEflag == 1)
     {
-      cout<<"outside net"<<endl;
+      // cout<<"outside net"<<endl;
       x += (curNet->max_x - curNet->min_x) * GetUnitX() / GetDefDbu();
       y += (curNet->max_y - curNet->min_y) * GetUnitY() / GetDefDbu();
     }
@@ -1952,4 +2003,39 @@ void PrintUnscaledHpwl(string mode) {
        << hpwl.first + hpwl.second << endl
        << "          x= " << hpwl.first << " y= " << hpwl.second << endl;
   cout << "===================================================" << endl;
+}
+
+void initOverlapInfo(){
+  isCellOverlappedWithMacro.resize(moduleCNT) ;
+
+  for(int i = 0;i < moduleCNT;i++){
+    isCellOverlappedWithMacro[i] = false;
+  }
+}
+void detectoverlap(){
+  int PEnum = 16;
+  for(int i = 0;i < moduleCNT;i++){
+    bool overlapped = isCellOverlapped(i);
+    isCellOverlappedWithMacro[i]= overlapped;
+  }
+}
+
+bool isCellOverlapped(int cell_idx){
+  int PEnum = 16;
+  FPOS pmin_cell ,pmax_cell;
+  pmin_cell.Set(moduleInstance[cell_idx].pmin);
+  pmax_cell.Set(moduleInstance[cell_idx].pmax);
+  for(int i = 0;i <  PEnum;i++){
+    FPOS pmin_macro ,pmax_macro;
+    pmin_macro.Set(terminalInstance[i].pmin);
+    pmax_macro.Set(terminalInstance[i].pmax);
+
+    if(pmin_cell.x > pmax_macro.x || pmax_cell.x < pmin_macro.x || pmin_cell.y > pmax_macro.y || pmax_cell.y < pmin_macro.y){//no overlap
+      continue;
+    }
+    else{
+      return true;
+    }
+  }
+  return false;
 }
